@@ -1,0 +1,65 @@
+Működés:
+* DS11307 valós idejű IC szenzorból az érték (idő(00:00) + dátum(DD-MM-YYYY)) kiolvasása, ennek tárolása.
+* DS18S20 hőmérséklet szenzorból az értékek kiolvasása, ezek tárolása
+* LCD kijelzőre az értékek kiírása (dátum, idő, hőmérséklet)
+* gombokkal kommunikáció az LCD kijelzővel:
+    - könyebb megoldás:
+        * BUTTON1: idő szerkesztése és elmentése
+        * BUTTON2: aktuális érték növelése
+        * BUTTON3: aktuális érték csökkentése
+        * BUTTON4: léptetés a kövi értékre -> tulcsorduláskor kezdő érték
+        * BUTTON5: dátum szerkesztése és elmentése
+* CAN hálózatra 1Hz frekvenciával idő, dátum hőmérséklet kiküldése
+
+FELADATOK:
+* BENCE -> értelmezd a hőmérséklet szenzor datasheet-jét
+* ZALÁN -> gombnyomás
+* BALASSA -> idő szenzor kiolvasása (datasheet értelmezése), érték tárolása
+
+LCD kijelző:
+* Be kellene állítani, hogy 2 sorban írjon ki értékeket az LCD kijelző!
+* ALAPÉRTELMEZETT: az LCD (16 karakter soronként) kijelző írja ki ezt:
+    - ha csak egy sor lehet: "YYYYMMDD HHMM TT" -> 16 karakter
+    - ha két sor lehet:
+        * felső sor: "YYYY-MM-DD      "
+        * alsó sor: "HH:MM       TT°C"
+* EXTRA: a ":" másodpercenként villog
+
+GOMB logika:
+* BUTTON1:
+    - Ez a gomb ne működjön, ha a DÁTUM szerkesztésben vagyunk (a BUTTON5 logikai változója TRUE)
+    - 1. benyomáskor -> LCD: "IDO SZERKESZTESE" (Ez csak 1mp-re jelenjen meg a kijelzőn)
+    - utána -> LCD: "HH:MM        ORA/PERC" (EXTRA: az épp aktuális pozició villogtatása 0.3mp-ként, ilyenkor nem kell az ORA/PERC felirat a végére)
+    - engedélyezzünk (valamilyen logikai változóval) az idő szerkesztését
+    - 2. benyomáskor -> LCD: "IDO ELMENTVE    " (Ez csak 1mp-re jelenjen meg a kijelzőn)
+    - utána: ALAPÉRTELMEZETT LCD kijelzés
+    - az idő szerkesztésére beállított logikai változót FALSE-ra tesszük
+    - az aktuálisan beállított értékeket ki kellene küldeni az ÓRA IC-jére
+* BUTTON2:
+    - Ez a gomb nem működik ha nem vagyunk benne a DÁTUM vagy IDŐ szerkesztésében (BUTTON1 és BUTTON5 logikai változója is FALSE)
+    - aktuális pozicíóban az adott érték növelése +1-el
+    - maximális érték elérésekor ne legyen változás (max óra: 23; max perc: 59)
+    - az aktuális pozició határozza meg melyik értéket növeljük (óra vagy perc)
+    - az aktuális pozíciót majd a BUTTON4-el lehet változtatni
+* BUTTON3:
+    - Ez a gomb nem működik ha nem vagyunk benne a DÁTUM vagy IDŐ szerkesztésében (BUTTON1 és BUTTON5 logikai változója is FALSE)
+    - aktuális pozicíóban az adott érték csökkentése -1-el
+    - manimális érték elérésekor ne legyen változás (min óra: 0; min perc: 0)
+    - az aktuális pozició határozza meg melyik értéket növeljük (óra vagy perc)
+    - az aktuális pozíciót majd a BUTTON4-el lehet változtatni
+* BUTTON4:
+    - Ez a gomb nem működik ha nem vagyunk benne a DÁTUM vagy IDŐ szerkesztésében (BUTTON1 és BUTTON5 logikai változója is FALSE)
+    - aktuális pozició növelése +1-el
+    - maximális érték elérésekor (dátum szerkesztésénél 0-1-2; idő szerkesztésénél 0-1) vált a kezdő értékre
+    - LCD kijelzőn jelenjen meg az aktuális pozíció a jobb oldalon (dátum EV-HONAP-NAP; idő ORA-PERC)
+* BUTTON5:
+    - Ez a gomb ne működjön, ha az IDŐ szerkesztésben vagyunk (a BUTTON1 logikai változója TRUE)
+    - 1. benyomáskor -> LCD: "DATUM SZERKESZT." (Ez csak 1mp-re jelenjen meg a kijelzőn)
+    - utána -> LCD: "YYYY-MM-DD EV/HONAP/NAP" (EXTRA: az épp aktuális pozició villogtatása 0.3mp-ként, ilyenkor nem kell az EV/HONAP/NAP felirat a végére)
+    - engedélyezzünk (valamilyen logikai változóval) a dátum szerkesztését
+    - 2. benyomáskor -> LCD: "DATUM ELMENTVE  " (Ez csak 1mp-re jelenjen meg a kijelzőn)
+    - utána: ALAPÉRTELMEZETT LCD kijelzés
+    - a dátum szerkesztésére beállított logikai változót FALSE-ra tesszük
+    - az aktuálisan beállított értékeket ki kellene küldeni az ÓRA IC-jére
+* A BUTTON2 & BUTTON3 & BUTTON4 függ attól hogy a dátumot vagy az időt állítjuk-e éppen be (vagyis BUTTON1 vagy BUTTON5 logikai változója a TRUE)
+    
