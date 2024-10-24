@@ -1,5 +1,3 @@
-Author: Balassa Hodi, Zalan Simon, Bence Bakonyvari
-
 Működés:
 * DS11307 valós idejű IC szenzorból az érték (idő(00:00) + dátum(DD-MM-YYYY)) kiolvasása, ennek tárolása.
 * DS18S20 hőmérséklet szenzorból az értékek kiolvasása, ezek tárolása
