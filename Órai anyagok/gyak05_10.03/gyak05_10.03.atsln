@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Atmel Studio Solution File, Format Version 11.00
+VisualStudioVersion = 14.0.23107.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "gyak05_10.03", "gyak05_10.03\gyak05_10.03.cproj", "{DCE6C7E3-EE26-4D79-826B-08594B9AD897}"
+EndProject
+Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "gyakorlas_10.03", "gyakorlas_10.03\gyakorlas_10.03.cproj", "{5F8D8AF0-EC2A-4156-A324-6A00F02B4CC6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|AVR = Debug|AVR
+		Release|AVR = Release|AVR
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DCE6C7E3-EE26-4D79-826B-08594B9AD897}.Debug|AVR.ActiveCfg = Debug|AVR
+		{DCE6C7E3-EE26-4D79-826B-08594B9AD897}.Debug|AVR.Build.0 = Debug|AVR
+		{DCE6C7E3-EE26-4D79-826B-08594B9AD897}.Release|AVR.ActiveCfg = Release|AVR
+		{DCE6C7E3-EE26-4D79-826B-08594B9AD897}.Release|AVR.Build.0 = Release|AVR
+		{5F8D8AF0-EC2A-4156-A324-6A00F02B4CC6}.Debug|AVR.ActiveCfg = Debug|AVR
+		{5F8D8AF0-EC2A-4156-A324-6A00F02B4CC6}.Debug|AVR.Build.0 = Debug|AVR
+		{5F8D8AF0-EC2A-4156-A324-6A00F02B4CC6}.Release|AVR.ActiveCfg = Release|AVR
+		{5F8D8AF0-EC2A-4156-A324-6A00F02B4CC6}.Release|AVR.Build.0 = Release|AVR
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
