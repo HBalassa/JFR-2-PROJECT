@@ -63,6 +63,3 @@ GOMB logika:
     - az aktuálisan beállított értékeket ki kellene küldeni az ÓRA IC-jére
 * A BUTTON2 & BUTTON3 & BUTTON4 függ attól hogy a dátumot vagy az időt állítjuk-e éppen be (vagyis BUTTON1 vagy BUTTON5 logikai változója a TRUE)
     
-
-
-MEGVÁLTOZTATVA 2024.10.24.
