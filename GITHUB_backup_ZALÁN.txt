@@ -52,6 +52,8 @@ GITHUB KOMMUNIKÁCIÓ
 2.2. $ git push github_repo_url_webcíme branch_név
 3. Egy github repo lokális repoba töltése:
 3.1. git clone github_repo_clone_url_webcíme
+4. Egy github repo lementése a lokális repoba
+4.1. $ git pull origin branch_név
 
 ************************************
 GIT PARANCSOK
