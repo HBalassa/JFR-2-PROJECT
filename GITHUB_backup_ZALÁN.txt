@@ -1,0 +1,87 @@
+************************************
+GIT & GITHUB HASZNÁLATÁHOZ SEGÍTSÉG
+************************************
+
+************************************
+GIT LETÖLTÉSE
+************************************
+1. webhely: https://git-scm.com/
+2. Downloads -> Windows
+3. Csináld végig a telepítőt, ha valamit nem tudsz mit pipálj be, szólj
+
+************************************
+GIHUB ACCCOUNT
+************************************
+1. webhely: https://github.com/
+2. Email címmel lehet létrehozni accountot
+3. Miután létrehoztad szólj nekem, hogy hozzáadjalak a közös projekthez
+
+************************************
+GIT ELSŐ KONFIGURÁLÁSA
+név, email, alap 'branch' név és könyvtár beállítása
+************************************
+1. Nyisd meg a 'Git Bash' nevű alkalmazást. Ebbe az alkalmazásba tudsz majd parancsokat írni
+2. A 'Git Bash' aktuális sorába kell mindig beírni a parancsokat (A $ jel után - $ jelet nem kell beírni, az eleve ott van, csak azért írom be hogy látszódjon hogy mi a commmand)
+3. Név, email beállítása: (azért hogy amikor valamit csinálsz, tudjuk, hogy te csináltad)
+3.1. $ git config --global user.name "Keresztnév Vezetéknév"
+3.2. $ git config --global user.email emialcímed@domain.com
+4. Alap 'branch' név beállítása: (ez csak azért kell, mert eredetileg 'master' az alap branch neve, de ezt átállítjuk 'main'-re
+4.1. $ git config --global init.default branch main
+5. Könyvtár beállítása: (ahol a file-k lesznek amiket a projekthez használsz)
+5.1. Hozz létre valahol egy mappát és nevezd el pl. 'POJEKT FELADAT'
+5.2. Ennek a mappának a helyét kell beírnod a parancsba a 'cd' után, de figyelni kell, hogy a '\' helyett mindig '/'-t kell használni. És ha van 'space' karakter a mappanevedben, akkor a 'space' elé kell rakni egy '\' jelet:
+5.3. $ cd könyvtár_név
+5.4. Nekem pl így néz ez ki:
+5.5. $ cd D:/_Dokumentumok/BME/2024-25.\ I/Járműfedélzeti\ rendszerek\ 2/PROJEKT\ FELADAT
+
+
+************************************
+GIT REPO LÉTREHOZÁSA
+************************************
+1. A repository egy olyan adattár, amibe majd a file-jaidat tudod elmenteni, benne a változásokat követni és így kezelni a dolgaidat
+2. Ha be van állítva a könyvtárad (cd paranccsal), akkor létre tudsz hozni benne egy git repo-t:
+2.1. $ git init
+
+************************************
+GITHUB KOMMUNIKÁCIÓ
+************************************
+1. Egy github repo beállítása:
+1.1. $ git remote add origin github_repo_url_webcíme
+2. Egy lokális repo branch feltöltése egy gihub repo-ba:
+2.1. $ git push origin branch_név
+2.2. $ git push github_repo_url_webcíme branch_név
+3. Egy github repo lokális repoba töltése:
+3.1. git clone github_repo_clone_url_webcíme
+4. Egy github repo lementése a lokális repoba
+4.1. $ git pull origin branch_név
+
+************************************
+GIT PARANCSOK
+a teljesség igénye nélkül
+************************************
+1. A jelenlegi állapot megnézése (van-e változás a legutóbbi mentés óta):
+1.1. $ git status
+1.2. Ilyenkor pirossal jelzi, ha valami fájlban változás volt, zölddel jelzi ha valamelyik fájl a 'staged' részben van már
+2. Egy/összes megváltoztatott fájl hozzáadása a 'staged' fájlokhoz (ezeket lehet később elmenteni a git repo-ban egy branch-be):
+2.1. $ git add fájl_név
+2.2. $ git add --all
+3. Egy fájl elvétele a 'staged' fájlokból:
+3.1. $ git rm --cached fájl_név
+4. A staged fájlok hozzáadása a repo branch-jéhez ('commit' parancs használata):
+4.1. $ git commit -m "Ide egy üzenetet írunk, ami elmondja mit csináltunk a fájlokkal amit feltöltünk a branch-be"
+5. Egy új 'branch' létrehozása
+5.1. $ git branch branch_név
+6. A 'branch'-ok megnézése:
+6.1. $ git branch
+6.2. $ git branch -a
+7. Váltás 'branch'-ok között
+7.1. $ git switch branch_név
+7.2. $ git checkout branch_név
+8. Létrehozás és váltás másik 'branch'-ra
+8.3. $ git switch -c branch_név
+8.4. $ git checkout -b branch_név
+9. Egy 'branch' törlése (-d csak akkor töröl, ha mergelve vannak már az alap branch-el a branch amit törlünk; -D mindig töröl) 
+9.1. $ git branch -d branch_név
+9.2. $ git branch -D branch_név
+10. Egy branch összefűzése egy másik branch-al (merge-elés). Ez úgy működik, hogy abban a branch-ba amiben vagy, beírod a parancsot, és a beírt branch hozzáfűződik a jelenlegi branch-hez amiben vagy:
+10.1. $ git merge branch_név
