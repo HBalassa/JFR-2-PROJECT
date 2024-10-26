@@ -1,90 +1,34 @@
-*** name and email***
-git config --global user.name "Your Name"
-git config --global user.email your@email.com
+************************************
+GIT & GITHUB HASZNÁLATÁHOZ SEGÍTSÉG
+************************************
 
-***Set up default branch name***
-git config --global init.default branch name_of_the_default_branch
+************************************
+GIT LETÖLTÉSE
+************************************
+1. webhely: https://git-scm.com/
+2. Downloads -> Windows
+3. Csináld végig a telepítőt, ha valamit nem tudsz mit pipálj be, szólj
 
-***Asking for help***
-git command_name -h
-git help command_name
+************************************
+GIHUB ACCCOUNT
+************************************
+1. webhely: https://github.com/
+2. Email címmel lehet létrehozni accountot
+3. Miután létrehoztad szólj nekem, hogy hozzáadjalak a közös projekthez
 
-***Clear console***
-clear
-
-***Change directory to look for files***
-cd directory_name
-/*NOTE: use '/' instead of '\'; and if a space occurs in the file or folder name, than put a '\' before it. e.g c:/Dokumentumok/Műszaki\ Egyetem*/
-
-***Create a repository from the actual directory***
-git init
-
-***Status of the repository***
-git status
-
-***Track a file***
-/*in order to get git to know that something was changed inside the file*/
-git add file_name
-git add --all
-
-***Untrack a file***
-git rm --cached file_name
-git restore --staged file_name
-
-***Commit a file***
-/*To save your files to a "history book"*/
-git commit -m "here comes text you want to add to the current save"
-/*When you commit the file instantly to the history book, not from the staged files:*/
-git commit -a -m "here comes text you want to add to the current save"
-
-***Check what was modified after commitment***
-git diff
-
-***Delete files***
-git rm "file_name"
-
-***Restore files***
-git restore "file_name"
-
-***Rename files***
-git mv "original_file_name" "new_file_name"
-
-***See your previous commits***
-git log
-git log --oneline
-
-***Change the last commit's name***
-git commit -m "new message" --amend
-
-***See what actually changed***
-git log -p
-/*press q to exit*/
-
-***Reset commit***
-git reset commit_identifier_number
-
-***Create additional branches***
-git branch branch_name
-
-***Get how many branch you have***
-git branch
-
-***Switch branches***
-git switch branch_name
-git switch -c branch_name /*create and switch*/
-
-***Merge branches***
-git merge -m "any message"
-
-***Delete branch***
-git branch -d branch_name
-
-***Typical flow***
-Main branch
-debug branch
-fixed
-delete debug branch
-
-***change branch and push***
-git switch branch_name
-git push -u origin branch_name
+************************************
+GIT ELSŐ KONFIGURÁLÁSA
+név, email, 'main branch', könytár beállítása
+************************************
+1. Nyisd meg a 'Git Bash' nevű alkalmazást. Ebbe az alkalmazásba tudsz majd parancsokat írni
+2. A 'Git Bash' aktuális sorába kell mindig beírni a parancsokat (A $ jel után - $ jelet nem kell beírni, az eleve ott van, csak azért írom be hogy látszódjon hogy mi a commmand)
+3. Név, email beállítása: (azért hogy amikor valamit csinálsz, tudjuk, hogy te csináltad)
+3.1. $ git config --global user.name "Keresztnév Vezetéknév"
+3.2. $ git config --global user.email emialcímed@domain.com
+4. Main branch beállítása: (ez kell a git-hez, ez a 'default branch' amibe mented az adataidat)
+4. Könyvtár beállítása: (ahol a file-k lesznek amiket a projekthez használsz)
+4.1. Hozz létre valahol egy mappát és nevezd el pl. 'POJEKT FELADAT'
+4.2. Ennek a mappának a helyét kell beírnod a parancsba a 'cd' után, de figyelni kell, hogy a '\' helyett mindig '/'-t kell használni. És ha van 'space' karakter a mappanevedben, akkor a 'space' elé kell rakni egy '\' jelet:
+4.3. $ cd könyvtár_név
+4.4. Nekem pl így néz ez ki:
+4.5. $ cd D:/_Dokumentumok/BME/2024-25.\ I/Járműfedélzeti\ rendszerek\ 2/PROJEKT\ FELADAT
