@@ -42,6 +42,16 @@ GIT REPO LÉTREHOZÁSA
 2. Ha be van állítva a könyvtárad (cd paranccsal), akkor létre tudsz hozni benne egy git repo-t:
 2.1. $ git init
 
+************************************
+GITHUB KOMMUNIKÁCIÓ
+************************************
+1. Egy github repo beállítása:
+1.1. $ git remote add origin github_repo_url_webcíme
+2. Egy lokális repo branch feltöltése egy gihub repo-ba:
+2.1. $ git push origin branch_név
+2.2. $ git push github_repo_url_webcíme branch_név
+3. Egy github repo lokális repoba töltése:
+3.1. git clone github_repo_clone_url_webcíme
 
 ************************************
 GIT PARANCSOK
@@ -71,3 +81,5 @@ a teljesség igénye nélkül
 9. Egy 'branch' törlése (-d csak akkor töröl, ha mergelve vannak már az alap branch-el a branch amit törlünk; -D mindig töröl) 
 9.1. $ git branch -d branch_név
 9.2. $ git branch -D branch_név
+10. Egy branch összefűzése egy másik branch-al (merge-elés). Ez úgy működik, hogy abban a branch-ba amiben vagy, beírod a parancsot, és a beírt branch hozzáfűződik a jelenlegi branch-hez amiben vagy:
+10.1. $ git merge branch_név
