@@ -1,90 +1,32 @@
-*** name and email***
-git config --global user.name "Your Name"
-git config --global user.email your@email.com
+***********************
+GITHUB PARANCSOK
+***********************
+1. Mindig mikor elkezdesz dolgozni, az első dolgod az legyen, hogy belépsz a 'Git Bash'-ba és ott beállítod a mappának a helyét:
+1.1. $ cd könyvtár_címe
+1.2. Nekem ez így néz ki:
+1.3. $ cd D:/_Dokumentumok/BME/2024-25.\ I/Járműfedélzeti\ rendszerek\ 2/PROJEKT\ FELADAT
 
-***Set up default branch name***
-git config --global init.default branch name_of_the_default_branch
+2. Ha a 'main' branch-ben vagy, lehúzod githubról a jelenlegi dolgokat, ahogy áll:
+2.1. $ git pull origin main
 
-***Asking for help***
-git command_name -h
-git help command_name
+3. Átváltasz egy másik branch-re ahol megírod a kódot amin éppen dolgozol:
+3.1. $ git checkout -b branch_név
 
-***Clear console***
-clear
+4. Ebben az új branchben megírtad a kódodat, ezt frissíted lokálisan az alábbi módokon:
+4.1. $ git add --all
+4.2. $ git commmit -m "Ide jön az üzeneted amit hozzá akarsz fűzni az aktuális módosításaidhoz"
 
-***Change directory to look for files***
-cd directory_name
-/*NOTE: use '/' instead of '\'; and if a space occurs in the file or folder name, than put a '\' before it. e.g c:/Dokumentumok/Műszaki\ Egyetem*/
+5. Majd ezt az elmentett branchet hozzáadod a github repohoz:
+5.1. $ git push origin branch_név
 
-***Create a repository from the actual directory***
-git init
+***********************
+KIEGÉSZÍTÉS
+***********************
+1. Ha váltani akarsz lokálisan branchek között (ez nem hoz létre új branchet, csak meglévőbe átlép)
+1.1. $ git checkout branch_név
 
-***Status of the repository***
-git status
+2. Ha törölni akarsz lokálisan egy branchet (csak akkor lehet, ha már mergelve van a 'main' branchel, a mergelést a githubon csináljuk meg; illetve csak azt a branch-et lehet törölni, amiben éppen nem vagy benne!):
+2.1. $ git branch -d branch_név
 
-***Track a file***
-/*in order to get git to know that something was changed inside the file*/
-git add file_name
-git add --all
-
-***Untrack a file***
-git rm --cached file_name
-git restore --staged file_name
-
-***Commit a file***
-/*To save your files to a "history book"*/
-git commit -m "here comes text you want to add to the current save"
-/*When you commit the file instantly to the history book, not from the staged files:*/
-git commit -a -m "here comes text you want to add to the current save"
-
-***Check what was modified after commitment***
-git diff
-
-***Delete files***
-git rm "file_name"
-
-***Restore files***
-git restore "file_name"
-
-***Rename files***
-git mv "original_file_name" "new_file_name"
-
-***See your previous commits***
-git log
-git log --oneline
-
-***Change the last commit's name***
-git commit -m "new message" --amend
-
-***See what actually changed***
-git log -p
-/*press q to exit*/
-
-***Reset commit***
-git reset commit_identifier_number
-
-***Create additional branches***
-git branch branch_name
-
-***Get how many branch you have***
-git branch
-
-***Switch branches***
-git switch branch_name
-git switch -c branch_name /*create and switch*/
-
-***Merge branches***
-git merge -m "any message"
-
-***Delete branch***
-git branch -d branch_name
-
-***Typical flow***
-Main branch
-debug branch
-fixed
-delete debug branch
-
-***change branch and push***
-git switch branch_name
-git push -u origin branch_name
+3. Ha egy branchnek az állapotát akarod megnézni, hogy minden friss-e:
+3.1. $ git status
