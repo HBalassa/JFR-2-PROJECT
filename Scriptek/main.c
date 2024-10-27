@@ -89,6 +89,7 @@ int main(void)
     {
 		if(task_10ms)
 		{
+			//mukodik e Zalan
 			//PORTF ^=(1<<PF0);
 			task_10ms=FALSE;
 		}
