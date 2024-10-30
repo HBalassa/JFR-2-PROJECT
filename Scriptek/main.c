@@ -33,6 +33,25 @@
 uint16_t timer_cnt=0;
 uint8_t task_10ms = FALSE, task_100ms = FALSE, task_500ms = FALSE;
 uint16_t ad_result;
+
+//szovegtomb
+char string_for_write[50];
+
+//időzítős segedvaltozok
+uint16_t time_0 = 0;
+uint16_t time_1 = 0;
+uint16_t display_time = 0;
+
+//menu vizsgalo logikai valtozok
+uint8_t date_edit = FALSE;
+uint8_t time_edit = FALSE;
+
+//gomblenyomas vizsgalo valtozok
+uint8_t PA0_pushed = FALSE;
+uint8_t PA0_counter = 0;
+
+uint8_t PA4_pushed = FALSE;
+uint8_t PA4_counter = 0;
 /******************************************************************************
 * External Variables
 ******************************************************************************/
@@ -54,8 +73,8 @@ void port_init(void);
 ******************************************************************************/
 void port_init(void)
 {
-	DDRA = 0xff;
-	PORTA = 0xff;
+	DDRA = (0<<PA0);
+	PORTA = (1<<PA0);
 	
 	DDRF = (1<<PF1) | (1<<PF2);
 	PORTF = (1<<PF1) | (1<<PF2);
@@ -89,13 +108,48 @@ int main(void)
     {
 		if(task_10ms)
 		{
-			//mukodik e Zalan
-			//PORTF ^=(1<<PF0);
+			//LCD kiirás
+			
+			//BUTTON1:
+			if (PA0_counter == 1 && PA4_counter != 1) //elso benyomas utan ÉS HA NEM VAGYUNK ÉPPEN DÁTUM SZERKESZTOBEN
+			{
+				
+				sprintf(string_for_write, "IDO SZERKESZTESE");
+				lcd_set_cursor_position(0);
+				lcd_write_string(string_for_write);
+				display_time = 1000;
+				
+			}
+			
 			task_10ms=FALSE;
 		}
 		if(task_100ms)
 		{
-			// ADCSRA |= (1<<ADSC); // AD konverzio vegere
+			//BUTTON1 = PA0
+		
+			if((PINA & (1<<PA0)) == 0 && PA0_pushed == FALSE)
+			{
+				PA0_counter++; //számolom, hogy hányszor nyomom be a gombot, ezzel fogom majd ellenőrizni, azt is, hogy éppen IDŐ szerkesztésben vagyunk e
+				if (PA0_counter == 1)
+				{
+					 if (display_time > 0) //fingom sincs h ez nűködik e xddddd
+					 {
+						 display_time--;
+						 if (display_time == 0) 
+						 {
+							 lcd_clear_display();  
+						 }
+					 }
+				}
+				
+				PA0_pushed = TRUE;
+			}
+			if((PINA & (1<<PA0)) == (1<<PA0) && PA0_pushed == TRUE) PA0_pushed = FALSE;
+			
+			
+			
+			
+			
 			task_100ms=FALSE;
 		}
 		if(task_500ms)
