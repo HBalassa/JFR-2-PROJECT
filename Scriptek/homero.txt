@@ -1,1 +1,4 @@
-
+//Pin inicializálása
+Data input/output
+Pin (TO-92)>>2
+Pin(So)>>4
