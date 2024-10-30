@@ -1,4 +1,10 @@
 //Pin inicializálása
 Data input/output
+Pin felhúzó ellenállás
 Pin (TO-92)>>2
 Pin(So)>>4
+Hőmérséklet
+9 bites első s^8 ,ha 0 negatív , ha 1 pozitív
+
+TH és TL regiszter
+A-D cconverter
