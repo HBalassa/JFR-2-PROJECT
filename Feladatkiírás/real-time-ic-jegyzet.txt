@@ -1,1 +1,13 @@
+***********************
+DS1307 DATASHEET JEGYZET
+***********************
 
+***********************
+GENERAL DESCRIPTION
+***********************
+* Adress data transferred serially through I^2C
+* Provides sec, min, hour, day, date, month, year
+* months width <31 days automatically adjusted
+* operates in either 24/12 hour format
+* automatically switches to backup suplly if needed
+* leap year compensation
