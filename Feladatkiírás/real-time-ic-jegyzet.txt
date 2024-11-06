@@ -11,3 +11,114 @@ GENERAL DESCRIPTION
 * operates in either 24/12 hour format
 * automatically switches to backup suplly if needed
 * leap year compensation
+* valid up to 2100
+
+***********************
+PIN DESCRIPTION
+***********************
+1. X1 & 2. X2
+* Connection for Quartz Crystal
+* X1 -> input to the oscillator; but can be connected to external oscillator
+* X2 -> output of the internal oscillator; if external oscillator is connected to X1, than left floated
+
+3. VBAT
+* backup supply input
+* if no backup suplly, VBAT must be grounded
+
+4. GND
+* ground
+
+5. SDA
+* Serial Data I/O
+* the data I/O for the I^2C
+* SDA is an open drain and requires an external pullup resistor
+* pullup V: <5.5V
+
+6. SCL
+* Serial Clock Input
+* the clock input for the I^2C
+* used to synchronzie data movement on the serial interface
+* pullup V: <5.5V
+
+7. SQW/OUT
+* Square Wave/Output Driver
+* when enabled -> SQWE = 1 -> SQW/OUT outputs one of four square-wave frequencies (1Hz, 4kHz, 8 kHz, 32 kHz)
+* SQW/OUT is open drain and requires an external pullup resistor
+* operates with VCC or VBAT
+* pullup V: <5.5V
+* if not used can be left floating
+
+8. VCC
+* Primary Power Supply
+* when voltage is is applied between normal limits, the device is fully accessible and data can be written and read
+* when backup supply is connected to device AND VCC<VTP -> read and writes are restricted; but timekeeping still continues
+
+***********************
+DETAILED DESCRIPTION
+***********************
+* low-power clock/calendar with 56 bytes of battery-backed SRAM
+* provides sec, min, hour, day, date, month, year information
+* months is automatically adjusted
+* operates as a SLAVE device in I^2C bus
+* access is obtained by implementing a START condition and providing a device identification code followed by a register address
+* subsequent registers can be accessed sequentally until STOP condition executed
+* when VCC < 1.25*VBAT -> resets the device address counter; inputs wont be recognized at this time
+* when VCC < VBAT -> switches to low-current battery-backup mode
+* when VCC > VBAT+0.2V -> switches from battery to VCC
+* when VCC > 1.25*VBAT -> recognizes inputs
+
+***********************
+RTC AND RAM ADDRESS MAP
+***********************
+* RTC registers: 00h - 07h address locations
+* RAM registers: 08h - 3Fh address locations
+* after 3Fh -> 00h comes
+
+***********************
+CLOCK AND CALENDAR
+***********************
+* time and calendar is obtained by reading the appropriate register bytes
+* time and calendar are set/initialized by writing the appropriate register bytes
+* the contents of registers are in BCD format
+* day-of-week increments at midnight
+* values that correspond to the day of week are user-defined but nust be sequential (e.g. Sunday: 1; Monday: 2 ...)
+* Illogical data -> set to undefined
+* Bit 7 of register 0 -> clock halt (CH) bit; CH=1 -> oscillator disabled; CH=0 -> oscillator enabled
+* first application the time and date registers: 01/01/00 01 00:00:00 (MM/DD/YY DOW HH:MM:SS) and CH=1
+
+* the clock can be run in either 12-hour or 24-hour mode
+* Bit 6 of the hours register defines this: if 1 -> 12-hour mode; if 0 -> 24-hour mode
+* Bit 5 of the hours register: when Bit6 = 1 -> Bit5 = 1 -> PM, Bit5 = 0 -> AM; when Bit6 = 0 -> this is the second 10-hour bit (20-23 hours)
+* hours value must be re-entered whenever the 12/24-hour mode bit is changed
+
+* when reading/writing registers -> secondary buffers are used to prevent errors when the internal registers update
+* when reading/writing registers -> user buffers are synchronized to the internal registers on any I2C START
+* the time information is read from these secondary registers, while clock continues to run
+* this way no re-read is needed in case internal registers update during a read
+* this divider chain is reset whenever the second register is written and the remaining time and date registers must be written within one second
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
