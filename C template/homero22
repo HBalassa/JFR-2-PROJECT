@@ -30,10 +30,7 @@ int16_t rawTemperature=0;
 /******************************************************************************
 * External Variables
 ******************************************************************************/
-// Hőmérséklet kiolvasása a DS18S20 szenzorból
-float readTemperature(OneWire *ow) {
-    uint8_t data[9];
-    int16_t rawTemperature;
+
 
     // Reset és szenzor kiválasztása
     OneWire_reset(ow);
@@ -93,7 +90,7 @@ void reverse_array(int arr[], int size) {
 * Output:           
 * Notes:            
 ******************************************************************************/
-for (int i = 0; i < 9; i++) {
+for (int i = 0; i < 16; i++) {
         data[i] = OneWire_read_byte(ow);
     }
 
@@ -110,35 +107,36 @@ for (int i = 0; i < 9; i++) {
 
 int main(void)
 {
-for (int j = 0, i<10,j++){	
-	for (int i = 0,i<10 ,i++){
-	if(data[0]==1){				//ha a hömersklet negatív
-	rawTemperature= rawTemperature-pov(i,j);
-	}
-	else
-	rawTemperature =rawTemperature+pov(i,j);
-	}  
-	i++;
-	j++;
+
+	
 	/* Replace with your application code */
 	while(1)
 	{
 	(left < right) {
         // Cseréljük a bal és jobb oldali elemeket
-        adat = arr[left];
+        data = arr[left];
         arr[left] = arr[right];
-        arr[right] = adat;
-
+        arr[right] = data;
         // Mozgatjuk a mutatókat
         left++;
         right--;
+	}
     }
 
 	reverse_array(data, size);
-	
-	}
-}
 
+for (int j = 0, i<16,j++){	
+	int j = 2;
+	if(data[0]==1){				//ha a hömersklet negatív
+	rawTemperature= rawTemperature-pov(i,j);
+	}
+	else{
+	rawTemperature =rawTemperature+pov(i,j);
+	}  
+	i++;
+	
+}
+printf(rawTemperature);
 
 /******************************************************************************
 * Interrupt Routines
