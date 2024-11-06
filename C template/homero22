@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include<string.h>
 #include<stdlib.h>
+#include <math.h>
 
 /******************************************************************************
 * Macros
@@ -22,11 +23,48 @@
 /******************************************************************************
 * Global Variables
 ******************************************************************************/
-
+uint8_t data[9];
+int size = sizeof(data) / sizeof(data[0]);
+int16_t rawTemperature=0;
 
 /******************************************************************************
 * External Variables
 ******************************************************************************/
+// Hőmérséklet kiolvasása a DS18S20 szenzorból
+float readTemperature(OneWire *ow) {
+    uint8_t data[9];
+    int16_t rawTemperature;
+
+    // Reset és szenzor kiválasztása
+    OneWire_reset(ow);
+    OneWire_write_byte(ow, 0xCC); // Skip ROM parancs
+    OneWire_write_byte(ow, 0x44); // Start conversion
+
+    // Várakozás a konverzióra (750 ms szükséges lehet)
+    delay(750);
+
+    // Újra kiválasztjuk a szenzort
+    OneWire_reset(ow);
+    OneWire_write_byte(ow, 0xCC); // Skip ROM
+    OneWire_write_byte(ow, 0xBE); // Read Scratchpad
+
+    // Scratchpad beolvasása
+    for (int i = 0; i < 9; i++) {
+        data[i] = OneWire_read_byte(ow);
+    }
+
+
+}
+
+int main() {
+    OneWire ow;
+    OneWire_init(&ow, /* GPIO Pin szám itt */);
+
+    float temperature = readTemperature(&ow);
+    printf("Hőmérséklet: %.2f °C\n", temperature);
+
+    return 0;
+}
 
 
 /******************************************************************************
@@ -37,7 +75,10 @@
 /******************************************************************************
 * Local Function Definitions
 ******************************************************************************/
-
+void reverse_array(int arr[], int size) {
+    int temp;
+    int left = 0;
+    int right = size - 1;
 /******************************************************************************
 * Function:         int main(void)
 * Description:      main function
@@ -45,12 +86,56 @@
 * Output:           
 * Notes:            
 ******************************************************************************/
+/******************************************************************************
+* Function:         strachpad beolvasás
+* Description:      
+* Input:            
+* Output:           
+* Notes:            
+******************************************************************************/
+for (int i = 0; i < 9; i++) {
+        data[i] = OneWire_read_byte(ow);
+    }
+
+/******************************************************************************
+* Function:         homerseklet_kiszámolása(void)
+* Description:      
+* Input:            
+* Output:           
+* Notes:            
+******************************************************************************/
+
+
+}
+
 int main(void)
 {
+for (int j = 0, i<10,j++){	
+	for (int i = 0,i<10 ,i++){
+	if(data[0]==1){				//ha a hömersklet negatív
+	rawTemperature= rawTemperature-pov(i,j);
+	}
+	else
+	rawTemperature =rawTemperature+pov(i,j);
+	}  
+	i++;
+	j++;
 	/* Replace with your application code */
 	while(1)
 	{
-		
+	(left < right) {
+        // Cseréljük a bal és jobb oldali elemeket
+        adat = arr[left];
+        arr[left] = arr[right];
+        arr[right] = adat;
+
+        // Mozgatjuk a mutatókat
+        left++;
+        right--;
+    }
+
+	reverse_array(data, size);
+	
 	}
 }
 
