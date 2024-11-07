@@ -1,0 +1,124 @@
+******************************************
+AT90CAN32 Datasheet pp. 204-233 JEGYZET
+******************************************
+
+******************************************
+INTRODUCTION
+******************************************
+* two bi-directional bus lines: serial clock (SCL) and serial data (SDA)
+* both lines are connected to VCC through pullup resistors
+
+TERMINOLOGY
+* master: initiates and terminates transmissions; generates SCL clock
+* slave: device addressed by the master
+* transmitter: device placing data on the bus
+* receiver: device reading data on the bus
+
+ELECTRICAL INTERCONNECTION
+* all devices on the bus are open-drain -> wired AND function
+* LOW on line -> one or more devices on LOW
+* HIGH on line -> all are on HIGH
+* bus capacitance limit: 400pF
+* two specifications: 100kHz OR 400kHz speed
+
+******************************************
+DATA TRANSFER AND FRAME FORMAT
+******************************************
+TRANSFERRING BITS
+* each data bit is accompanied by a pulse on the clock line
+* the level of data must be stable when SCL is HIGH
+* exepction: START/STOP conditions
+
+START AND STOP CONDITIONS
+* any transmission is initiated with a START condition from the master and is terminated when the master issues a STOP condition
+* between STOP and START the bus is busy
+* only a REPEATED START condition can occur between START and STOP, and it starts a new transmission
+* (REPEATED) START: SCL: HIGH; SDA: HIGH->LOW
+* STOP: SCL: HIGH; SDA: LOW->HIGH
+
+ADDRESS PACKET FORMAT
+* address packet (9-bits): 7-bit address + 1-bit direction + 1-bit acknowledge
+* if a slave is being addressed it should acknowledge by pulling SDA to LOW in the ninth SCL cycle
+* if it's busy, than the SDA shall left high in the ninth SCL cycle
+* then the master do a REPEATED START condition
+
+* the MSB of the address byte is transmitted first
+* adress 0000000 is general call
+
+* at a general call, all slaves should respond by pulling the SDA line low in the ACK cycle
+* it is used when the master wants to transmit the same message to several slaves
+* general call followed by a READ bit is meaningless
+* all addresses of the format 1111xxx should be reserved for future purposes
+
+DATA PACKET FORMAT
+* all data are 9 bits long: data byte and acknowledge bit
+* ACK is signalled by pulling the SDA LOW by the receiver during the ninth SCL cycle
+* if SDA is HIGH in the ninth cycle it means NACK
+* when the receiver gets the last byte it shall inform the transmitter by sending a NACK
+* the MSB data byte is transmitted first
+
+COMBINING ADDRESS AND DATA PACKETS INTO A TRANSMISSION
+* transmission: START + SLA+R/W + DATA+ACK + ... + STOP
+* empty message (START+STOP) is illegal
+* the wired-AND of the SCL line can be used: the slave can extend the SCL LOW period by pulling the SCL line low (useful when the clock speed is too fast); this doesnt affect the clock time of the HIGH period (as it is determined by the master)
+
+******************************************
+MULTI-MASTER BUS SYSTEMS
+******************************************
+* not important for us since the DS1307 is a slave in our system
+
+******************************************
+OVERVIEW OF THE TWI MODULE
+******************************************
+SCL AND SDA PINS
+* output drivers have slew-rate limiter
+* input drivers have spike filters
+* the internal pullup resistors can be enabled by setting the PORT bits corresponding to the SCL and SDA pins
+* the internal pullups can eliminate the need of external pullup resistors
+* SCL -> PD0; SDA -> PD1 pins
+* to set up the pullup resistors:
+  > DDRD = (0<<PD0) | (0<<PD1);
+  > PORTD = (1<<PD0) | (1<<PD0);
+
+BIT RATE GENERATOR UNIT
+* this unit controls the period of SCL when operating in a Master mode
+* this period is controlled by the settings in the TWI Bit Rate Register (TWBR) and the Prescaler bits in the TWI Status Register (TWSR)
+* (in slave operation the CPU clock frequency must be 16x higher than the SCL frequency)
+* the SCL frequency is generated according to the equation:
+  - SCL frequency = (CLKio)/(16 + 2*(TWBR)*4^(TWPS))
+  - where TWBR: value of the TWBR register [should be 10 or higher]
+  - and TWPS: value of the prescaler bits in the TWSR register
+
+BUS INTERFACE UNIT
+* this unit contains the Data and Address Shift Register (TWDR), and START/STOP controller
+* TWDR (8-bit) contains the address or data bytes to be trasmitted or received
+* this unit also contains a register containing the (N)ACK bit to be transmitted or recieved
+* the (N)ANCK register is not directly accessible, but when recieving it can be set or cleared by manipulating the TWI Control Register (TWCR)
+* when in transmitter mode, the value of the recieved (N)ACK bit can be determined by the value in the TWSR
+
+ADDRESS MATCH UNIT
+* the address unit checks if received address bytes match the 7-bit address in the TWI Address Register (TWAR)
+* if the TWI General Call Recognition Enable (TWGCE) bit in the TWAR is written to 1, all incoming address bits will also be compared against the General Call address
+* if an address matches -> Control Unit is informed to take actions
+
+CONTROL UNIT
+* this unit monitors the TWI bus and generates responses corresponding to the settings in the TWCR register
+* when an event occurs on the bus, the TWI Interrupt Flag (TWINT) is asserted
+* in the next cycle the TWSR register is updated with a status code identifying the event
+* as long as the TWINT flag is set, the SCL line is held LOW
+* the TWINT flag is set in the following situations:
+  - after START/REPEATED START condition
+  - after SLA+R/W
+  - after address byte
+  - after received data byte
+  - after STOP condition
+
+******************************************
+TWI REGISTER DESCRIPTION
+for more information datasheet pp. 212-215
+******************************************
+TWI BIT RATE REGISTER (TWBR)
+* Bits 7...0
+  - selects the division factor for the bit rate generator (in the eqation above)
+
+TWI CONTROL REGISTER (TWCR)
