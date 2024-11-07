@@ -97,28 +97,86 @@ CLOCK AND CALENDAR
 * this way no re-read is needed in case internal registers update during a read
 * this divider chain is reset whenever the second register is written and the remaining time and date registers must be written within one second
 
+***********************
+CONTROL REGISTER
+***********************
+* Address: 07h
+* it is used to control the operation of the SQW/OUT PIN
+* Bit 7: Output control
+  - this bit controls the output level of the SQW/OUT pin, when the square-wave output is disabled
+  - if SQWE = 0 -> the logic level on SQW/OUT pin is 1 if OUT = 1; and 0 if OUT = 0
+  - initially this bit is 0
+* Bit 4: Square-Wave Enable (SQWE)
+  - it is 1 -> enables oscillator output
+  - the fequency depends of square wave output depends upon the value of RS0 and RS1 (Bit 0 and Bit 1)
+  - SQW/OUT output -> 1Hz -> clock updates on falling edge of the square wave
+  - initially this bit is 0
+* Bit 1 and 0: Rate select (RS[1:0])
+  - controls the frequency of the square-wave output when it is enabled
+  - intially these bits are 1-1
 
+***********************
+I2C DATA BUS
+***********************
+* device that sends data -> transmitter
+* device that recieves data -> receiver
+* device that controlls message -> master
+* devices that are controlled by the master -> slaves
+* the bus is controlled by a master that generates serial clock (SCL), controls bus access, generates START and STOP conditions
+* this DS1307 is a SLAVE
 
+* data transfer only happen when bus is not busy
 
+* bus conditions:
+  - Bus not busy: SCL and SDA are HIGH
+  - START data transfer: SCL HIGH; SDA HIGH to LOW
+  - STOP data transfer: SCL HIGH; SDA LOW to HIGH
+  - Data valid:
+    + the data line must be stable for the duration of the HIGH period of the clock signal, so data must be changed during the LOW period
+    + one clock pulse per bit of data
+    + each data transfer starts with a START condition and ends with a STOP condition
+    + the number of data bytes are not limited, but determined by the master device
+    + information is transferred byte-wise, and each receiver acknowledges with a ninth bit
+    + DS1307 operates in the standard mode (100kHz) only
+  - Acknowledgement:
+    + each receiving device, when addressed is obligied to generate am acknowledge after the reception of each byte
+    + the master must generate an extra clock pulse which is associated with this acknowledgement bit
+    + the device that acknowledges must pull down the SDA line during the clock pulse in such way that SDA is stable LOW while SCL is HIGH
 
+* depending on the R/W bit two types of data transfer are possible:
+1. Data transfer from a master transmitter to a slave receiver
+  - first byte from master: the slave address
+  - than a number of data bytes
+  - the slave returns an acknowledge bit after each received byte
+  - data is transferred with the most significant bit (MSB)
+2. Data transfer from a slave transmitter to a master receiver
+  - first byte from the master: the slave address
+  - than slave returns an acknowledge bit
+  - after a number a data bytes from slave to master
+  - the master returns an acknowledge bit after all recieved bytes other than the last byte
+  - at the end of the last recieved byte a not acknowledge is returned
 
+* the master generates all the serial clock pulses and the START and STOP conditions
+* a transfer ends with a STOP of repeated START condition
+* data transferred with the MSB first
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+* the DS1307 can operate in the following two modes:
+1. Slave Reciever Mode (Write Mode):
+  - serial data and clock are received through SDA and SCL
+  - after each byte recieved and acknowledge bit is transmitted
+  - START and STOP conditions are the beginning and end of serial transfer
+  - after START condition, first byte received: slave address byte: 1101000 (for DS1307) then the direction bit (R/W) which is 0 for write
+  - after this, DS1307 outputs an acknowledge on SDA
+  - after this the master transmits a word address to the DS1307 -> this sets the register pointer on the DS1307, with the DS1307 acknowledging the transfer
+  - then the master can transmit 0 or more bytes of data with the DS1307 acknowledging each byte received
+  - the register pointer automatically increments after each data byte are written
+  - at the end: master generates STOP condition
+2. Slave Transmitter Mode (Read Mode):
+  - the DS1307 transmits serial data on SDA, while serial clock is input on SCL
+  - START condition from master, than the first byte
+  - first byte from master: slave address (7-bits) than R/W (1)
+  - then the DS1307 acknowledges, and then the data bytes come each ending with the acknowledge bit from master
+  - the data starts with the register address pointed to by the register pointer
+  - if the register pointer is not written to before the initiation of a read mode the first address that is read is the last one stored in the register pointer
+  - the register pointer automatically increments after each byte
+  - at the end the DS1307 must receive a NOT Acknowledge by the master
