@@ -122,3 +122,53 @@ TWI BIT RATE REGISTER (TWBR)
   - selects the division factor for the bit rate generator (in the eqation above)
 
 TWI CONTROL REGISTER (TWCR)
+* Bit 7 - TWINT: TWI Interrupt Flag
+  - set by hardware
+  - while the TWINT flag is set the SCL low period is streched
+  - the TWINT must be cleared by writing a 1
+  - it is not automatically cleared
+  - clearing this flag starts the operation of the TWI, so all accesses to the TWAR, TWSR and TWDR must be complete before clearing this flag
+* Bit 6 - TWEA: TWI Enable Acknowledge Bit
+  - if TWEA: 1 -> the ACK pulse is generated if the conditions are met:
+    + the decice's own slave address has been received
+    + general call has been recieved
+    + data byte has been received
+  - if TWEA: 0 -> the device virtually disconnects from the TWI Serial Bus temporarly
+  - address recognition can then be resumed by writing 1 to TWEA
+* Bit 5 - TWSTA: TWI START Condition Bit
+  - the application writes a 1 to TWSTA when it wants to start the bus
+  - TWSTA must be cleared when the START condition has been transmitted
+* Bit 4 - TWSTO: TWI STOP Condition Bit
+  - TWSTO: 1 -> generates a STOP condition
+  - when STOP condition is generated, this is cleared automatically
+* Bit 3 - TWWC: TWI Write Collision Flag
+  - it is set when attempting to write to the TWDR when TWINT is low
+  - cleared by writing the TWDR Register when TWINT is high
+* Bit 2 - TWEN: TWI Enable Bit
+  - TWEN: 1 -> TWI takes control over the I/O pins connected to the SCL and SDA (PD0 and PD1)
+  - TWEN: 0 -> TWI is switched off
+* Bit 1 - Reserved Bit
+  - must be written to 0
+* Bit 0 - TWIE: TWI Interrupt Enable
+  - TWIE: 1 -> TWI interrupt request is activated as long as the TWINT flag is HIGH
+
+TWI STATUS REGISTER - TWSR
+* Bit 7...3 - TWS: TWI Status
+  - these bits reflect to the status of the Two Wired Serial Bus:
+    + see: Status Codes Table 18-4. p. 224
+* Bit 2 - Res: Reserved Bit
+  - always read as 0
+* Bit 1...0 - TWPS: TWI Prescaler Bits
+  - these give the TWPS value in the equation above
+  - values, see: Table 18-2. p. 214
+
+TWI DATA REGISTER
+* Bits 7...0 - TWD: TWI Data Register
+  - transmit mode -> the next byte to be transmitted
+  - receive mode -> the last byte received
+  - it is writeable while the TWI is not in the process of shifting a byte -> this happens when TWINT is set by hardware
+  - it cannot be initialized before the first interrupt occurs
+  - the data remains stable as long as TWINT is set
+  - while data is shifted out, data on the bus is simultaneously shifted in
+  - always contains the last byte present on the bus
+  - handling of the ACK bit is controlled automatically by the TWI logic
