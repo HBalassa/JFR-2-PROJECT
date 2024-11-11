@@ -46,21 +46,21 @@ Master Transmitter mode
 #define DATE 1
 
 // DS1307 Registers Address
-#define DS1307_SEC 0x00
-#define DS1307_MIN 0x01
-#define DS1307_HOU 0x02
-#define DS1307_DAY 0x03
-#define DS1307_DAT 0x04
-#define DS1307_MON 0x05
-#define DS1307_YEA 0x06
-#define DS1307_CTRL 0x07
+#define SEC 0x00
+#define MIN 0x01
+#define HOU 0x02
+#define DAY 0x03
+#define DAT 0x04
+#define MON 0x05
+#define YEA 0x06
+#define CTRL 0x07
 
 // DS1307_SEC Register bits
-#define DS1307_SEC_CH 7
+#define CH 7
 
 // DS1307_HOU Register bits
 #define AMPM 5
-///////////////////////////////////////////////
+#define HOURMODE 6
 
 // DS1307_CTRL Register bits
 #define RS0 0
@@ -96,10 +96,10 @@ if((TWSR & 0xF8) != MT_SLA_ACK) twi_error(TWSR);
 // question: What is the word address? Maybe the register address?
 if(current_edit == TIME) {
   // Address of the first time register (seconds)
-  TWDR = 0x00;
+  TWDR = SEC;
 } else if(current_edit == DATE) {
   // Address of the first date register (day)
-  TWDR = 0x03;
+  TWDR = DAY;
 }
 
 // Clear TWINT to start transmission of data
@@ -116,10 +116,10 @@ if(current_edit == TIME) {
   // Data for the seconds register
   // IMPORTANT! Data shall be written in BCD format!
   if(dec_to_bcd(SECONDS) == -1) bcd_error(); // do some error routine
-  TWDR = dec_to_bcd(SECONDS) | (1<<CH);
+  TWDR = dec_to_bcd(SECONDS) | (0<<CH);
 } else if(current_edit == DATE) {
-  // Address of the first date register (day)
-  TWDR = 0x03;
+  // Data for the day register
+  TWDR = calc_day_of_week(YEAR, MONTH, DATE);
 }
 
 
@@ -165,5 +165,14 @@ uint8_t decimal_to_bcd(uint8_t dec_num) {
 */
 /*
 void bcd_error() {
+}
+*/
+/*
+uint8_t calc_day_of_week(uint16_t year, uint8_t month, uint8_t date) {
+  // output is between 0...6
+  // day of the week is calculated by the following formula
+  uint8_t century = year/100;
+  uint8_t day_of_week = ((int)(date + floor(2.6*month-0.2) - 2*century + year + floor(year/4) + floor(century/4))) % 7;
+  return day_of_week;
 }
 */
