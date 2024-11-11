@@ -45,6 +45,29 @@ Master Transmitter mode
 #define TIME 0
 #define DATE 1
 
+// DS1307 Registers Address
+#define DS1307_SEC 0x00
+#define DS1307_MIN 0x01
+#define DS1307_HOU 0x02
+#define DS1307_DAY 0x03
+#define DS1307_DAT 0x04
+#define DS1307_MON 0x05
+#define DS1307_YEA 0x06
+#define DS1307_CTRL 0x07
+
+// DS1307_SEC Register bits
+#define DS1307_SEC_CH 7
+
+// DS1307_HOU Register bits
+#define AMPM 5
+///////////////////////////////////////////////
+
+// DS1307_CTRL Register bits
+#define RS0 0
+#define RS1 1
+#define SQWE 4
+#define OUT 7
+
 // global variables
 uint8_t = current_edit = TIME;
 
@@ -92,7 +115,8 @@ if((TWSR & 0xF8) != MT_DATA_ACK) twi_error(TWSR);
 if(current_edit == TIME) {
   // Data for the seconds register
   // IMPORTANT! Data shall be written in BCD format!
-  TWDR = SECONDS;
+  if(dec_to_bcd(SECONDS) == -1) bcd_error(); // do some error routine
+  TWDR = dec_to_bcd(SECONDS) | (1<<CH);
 } else if(current_edit == DATE) {
   // Address of the first date register (day)
   TWDR = 0x03;
@@ -125,6 +149,21 @@ void twi_error(uint8_t TWSR_register_value) {
 */
 /*
 uint8_t decimal_to_bcd(uint8_t dec_num) {
+  // to convert from dec to bcd, just simply convert every digit to a 4-bit binary number
+  // the input is between 0...99
+  if(dec_num > 99) return -1;
 
+  // dec_num = second_digit*10 + first_digit
+  uint8_t first_digit = dec_num % 10;
+  uint8_t second_digit = dec_num / 10;
+
+  // number in bcd
+  uint8_t bcd_num = (second_digit<<4) | (first_digit);
+
+  return bcd_num;
+}
+*/
+/*
+void bcd_error() {
 }
 */
