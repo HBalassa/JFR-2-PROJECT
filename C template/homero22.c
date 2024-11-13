@@ -10,6 +10,8 @@
 #include<stdlib.h>
 #include <math.h>
 #define DS18S20_PIN 7
+#include <wiringPi.h>
+#include <wiringPiI2C.h>
 
 /******************************************************************************
 * Macros
