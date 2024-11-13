@@ -4,7 +4,7 @@
 /******************************************************************************
 * Include files
 ******************************************************************************/
-
+#include <inttypes.h>
 
 /******************************************************************************
 * Types
@@ -66,6 +66,7 @@
 * Global Function Declarations
 ******************************************************************************/
 void twi_init(void);
-void twi_mt_mode(uint8_t);
+void twi_mt_mode(uint8_t current_edit, uint8_t second, uint8_t minute, uint8_t hour, uint8_t date, uint8_t month, uint8_t year);
+void twi_mr_mode(uint8_t *second, uint8_t *minute, uint8_t *hour, uint8_t *date, uint8_t *month, uint8_t *year);
 
 #endif /* TWI_H_ */

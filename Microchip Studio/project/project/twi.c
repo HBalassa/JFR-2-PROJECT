@@ -120,6 +120,7 @@ uint8_t calc_day_of_week(uint16_t year, uint8_t month, uint8_t date) {
 * Input:			-
 * Output:			-
 * Notes:			SCL Clock Frequency = 100 kHz
+					calculated from excel
 ******************************************************************************/
 void twi_init(void) {
 	TWBR = 0x08;
@@ -127,13 +128,14 @@ void twi_init(void) {
 }
 
 /******************************************************************************
-* Function:         void twi_mt_mode(void);
+* Function:         void twi_mt_mode(uint8_t current_edit, uint8_t second, uint8_t minute, uint8_t hour, uint8_t date, uint8_t month, uint8_t year);
 * Description:		Two-wire Serial Interface Master Transmitter mode
 * Input:			current edit -> either TIME or DATE
+					second, minute, hour, date, month, year -> data that we want to send to the slave
 * Output:			-
 * Notes:			-
 ******************************************************************************/
-void twi_mt_mode(uint8_t current_edit) {
+void twi_mt_mode(uint8_t current_edit, uint8_t second, uint8_t minute, uint8_t hour, uint8_t date, uint8_t month, uint8_t year) {
 	// Generate START Condition
 	TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
 	
@@ -173,14 +175,129 @@ void twi_mt_mode(uint8_t current_edit) {
 	// Check the status register
 	if((TWSR & 0xF8) != MT_DATA_ACK) twi_error(TWSR);
 	
-	// Send the first data
+
 	// IMPORTANT! Data shall be written in BCD format!
+	// Send the first data
 	if(current_edit == TIME) {
 		// Data for the seconds register
-		if(decimal_to_bcd(SECONDS) == -1) bcd_error(); // do some error routine
-		TWDR = decimal_to_bcd(SECONDS) | (0<<CH);
+		if(decimal_to_bcd(second) == -1) bcd_error(); // do some error routine
+		TWDR = decimal_to_bcd(second) | (0<<CH);
 	} else if(current_edit == DATE) {
 		// Data for the day register
-		TWDR = calc_day_of_week(YEAR, MONTH, DATE);
+		TWDR = calc_day_of_week(year, month, date);
 	}
+	
+	// Clear TWINT to start transmission of data
+	TWCR = (1<<TWINT) | (1<<TWEN);
+	
+	// Wait for TWINT flag set, this indicates that the data has been transmitted and ACK/NACK has been received
+	while(!(TWCR & (1<<TWINT)));
+	
+	// Check the status register
+	if((TWSR & 0xF8) != MT_DATA_ACK) twi_error(TWSR);
+	
+	// Send the second data
+	if(current_edit == TIME) {
+		// Data for the Minutes register
+		if(decimal_to_bcd(minute) == -1) bcd_error();
+		TWDR = decimal_to_bcd(minute);
+	} else if(current_edit == DATE) {
+		// Data for the Date register
+		if(decimal_to_bcd(date) == -1) bcd_error();
+		TWDR = decimal_to_bcd(date);
+	}
+	
+	// Clear TWINT to start transmission of data
+	TWCR = (1<<TWINT) | (1<<TWEN);
+	
+	// Wait for TWINT flag set, this indicates that the data has been transmitted and ACK/NACK has been received
+	while(!(TWCR & (1<<TWINT)));
+	
+	// Check the status register
+	if((TWSR & 0xF8) != MT_DATA_ACK) twi_error(TWSR);
+	
+	// Send the third data
+	if(current_edit == TIME) {
+		// Data for the Hours register. This is the last data for TIME registers
+		if(decimal_to_bcd(hour) == -1) bcd_error();
+		TWDR = (0<<HOURMODE) | decimal_to_bcd(hour);
+	} else if(current_edit == DATE) {
+		// Data for the Month register
+		if(decimal_to_bcd(month) == -1) bcd_error();
+		TWDR = decimal_to_bcd(month);
+	}
+	
+	// Clear TWINT to start transmission of data
+	TWCR = (1<<TWINT) | (1<<TWEN);
+	
+	// Wait for TWINT flag set, this indicates that the data has been transmitted and ACK/NACK has been received
+	while(!(TWCR & (1<<TWINT)));
+	
+	// Check the status register
+	if((TWSR & 0xF8) != MT_DATA_ACK) twi_error(TWSR);
+	
+	// Send the fourth data
+	if(current_edit == DATE) {
+		// Data for the Year Register (only the last two digits of the decimal 4-digit year is needed)
+		uint8_t year_short = year % 100;
+		if(decimal_to_bcd(year_short) == -1) bcd_error();
+		TWDR = decimal_to_bcd(year_short);
+	}
+	
+	// Clear TWINT to start transmission of data
+	TWCR = (1<<TWINT) | (1<<TWEN);
+	
+	// Wait for TWINT flag set, this indicates that the data has been transmitted and ACK/NACK has been received
+	while(!(TWCR & (1<<TWINT)));
+	
+	// Check the status register
+	if((TWSR & 0xF8) != MT_DATA_ACK) twi_error(TWSR);
+	
+	// Generate STOP Condition
+	TWCR = (1<<TWINT) | (1<<TWSTO) | (1<<TWEN);
+}
+
+/******************************************************************************
+* Function:         void twi_mr_mode(uint8_t current_edit, uint8_t *second, uint8_t *minute, uint8_t *hour, uint8_t *date, uint8_t *month, uint8_t *year)
+* Description:		Two-wire Serial Interface Master Receiver mode
+* Input:			*second, *minute, *hour, *date, *month, *year -> pointer adresses of the variables that we change 
+* Output:			-
+* Notes:			-
+******************************************************************************/
+void twi_mr_mode(uint8_t *second, uint8_t *minute, uint8_t *hour, uint8_t *date, uint8_t *month, uint8_t *year) {
+	// Generate START Condition
+	TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
+	
+	// Wait for TWINT flag set, this indicates that the START condition has been transmitted
+	while(!(TWCR & (1<<TWINT)));
+	
+	// Check the status register
+	if((TWSR & 0xF8) != START) twi_error(TWSR);
+	
+	// First we set up the DS1307 Register pointer to point to the first register we want to read: the seconds
+	// Send slave address + write bit (0)
+	TWDR = DS1307_ADR_W;
+	
+	// Clear TWINT to start transmission of address
+	TWCR = (1<<TWINT) | (1<<TWEN);
+	
+	// Wait for TWINT flag set, this indicates that the SLA+W has been transmitted and ACK has been received
+	while(!(TWCR & (1<<TWINT)));
+	
+	// Check the status register
+	if((TWSR & 0xF8) != MT_SLA_ACK) twi_error(TWSR);
+	
+	// Send word address (which sets the register pointer on the DS1307)
+	TWDR = SEC_ADR;
+	
+	// Clear TWINT to start transmission of data
+	TWCR = (1<<TWINT) | (1<<TWEN);
+	
+	// Wait for TWINT flag set, this indicates that the data has been transmitted and ACK/NACK has been received
+	while(!(TWCR & (1<<TWINT)));
+	
+	// Check the status register
+	if((TWSR & 0xF8) != MT_DATA_ACK) twi_error(TWSR);
+	
+	// Generate REPEATED START Condition
 }
