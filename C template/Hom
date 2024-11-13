@@ -1,0 +1,40 @@
+#include <stdio.h>
+#include "OneWire.h"  // Egy OneWire könyvtárra lesz szükség
+
+// Hőmérséklet kiolvasása a DS18S20 szenzorból
+float readTemperature(OneWire *ow) {
+    uint8_t data[9];
+    int16_t rawTemperature;
+
+    // Reset és szenzor kiválasztása
+    OneWire_reset(ow);
+    OneWire_write_byte(ow, 0xCC); // Skip ROM parancs
+    OneWire_write_byte(ow, 0x44); // Start conversion
+
+    // Várakozás a konverzióra (750 ms szükséges lehet)
+    delay(750);
+
+    // Újra kiválasztjuk a szenzort
+    OneWire_reset(ow);
+    OneWire_write_byte(ow, 0xCC); // Skip ROM
+    OneWire_write_byte(ow, 0xBE); // Read Scratchpad
+
+    // Scratchpad beolvasása
+    for (int i = 0; i < 9; i++) {
+        data[i] = OneWire_read_byte(ow);
+    }
+
+    // Hőmérséklet kiszámítása
+    rawTemperature = (data[1] << 8) | data[0];
+    return (float)rawTemperature / 2.0;
+}
+
+int main() {
+    OneWire ow;
+    OneWire_init(&ow, /* GPIO Pin szám itt */);
+
+    float temperature = readTemperature(&ow);
+    printf("Hőmérséklet: %.2f °C\n", temperature);
+
+    return 0;
+}

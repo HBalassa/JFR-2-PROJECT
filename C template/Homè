@@ -1,0 +1,47 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#define SENSOR_FILE_PATH "/sys/bus/w1/devices/28-XXXXXXXXXXXX/w1_slave"
+
+double read_temperature() {
+    FILE *fp;
+    char buffer[100];
+    double temperature;
+    
+    // Hőmérséklet olvasása az érzékelő fájljából
+    if ((fp = fopen(SENSOR_FILE_PATH, "r")) == NULL) {
+        perror("Hőmérséklet-érzékelő fájl megnyitása sikertelen");
+        return -1;
+    }
+    
+    // Első sor olvasása (a fájl tartalmazza az érzékelő adatait)
+    fgets(buffer, sizeof(buffer), fp);
+    // Második sor olvasása, amely a hőmérsékletet tartalmazza
+    fgets(buffer, sizeof(buffer), fp);
+
+    fclose(fp);
+
+    // Keresd meg a "t=" részt a sorban
+    char *temp_pos = strstr(buffer, "t=");
+    if (temp_pos != NULL) {
+        // A "t=" utáni érték Celsius fokban van, de ezerrel szorozva
+        temperature = atof(temp_pos + 2) / 1000;
+    } else {
+        fprintf(stderr, "Hőmérséklet érték olvasása sikertelen\n");
+        return -1;
+    }
+
+    return temperature;
+}
+
+int main() {
+    double temperature = read_temperature();
+    
+    if (temperature != -1) {
+        printf("Aktuális hőmérséklet: %.2f °C\n", temperature);
+    }
+    
+    return 0;
+}
