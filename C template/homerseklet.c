@@ -57,6 +57,20 @@ int16_t rawTemperature=0;
 }
 
 int main() {
+	pinMode(DS18B20_PIN, OUTPUT);
+
+    // Hőmérséklet konvertálásának elindítása
+    convert_temp();
+
+    // Hőmérséklet leolvasása
+    uint16_t raw_temp = read_temp();
+
+    // Nyers adat átalakítása Celsius-fokká
+    float tempC = (float)raw_temp / 16.0;
+
+    // Kiírás a soros portra
+    printf("Hőmérséklet: %.2f °C\n", tempC);
+
     OneWire ow;
     OneWire_init(&ow, /* GPIO Pin szám itt */);
 
