@@ -1,0 +1,1 @@
+https://github.com/positronic57/DS18S20Library/blob/master/example/DS18B20example1.c
