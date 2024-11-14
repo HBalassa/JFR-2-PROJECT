@@ -30,6 +30,10 @@
 #define MT_DATA_ACK 0x28
 #define MT_DATA_NACK 0x30
 #define ARB_LOST 0x38
+#define MR_SLA_ACK 0x40
+#define MR_SLA_NACK 0x48
+#define MR_DATA_ACK 0x50
+#define MR_DATA_NACK 0x58
 
 // DS1307 slave address
 #define DS1307_ADR_W 0b11010000
@@ -66,7 +70,7 @@
 * Global Function Declarations
 ******************************************************************************/
 void twi_init(void);
-void twi_mt_mode(uint8_t current_edit, uint8_t second, uint8_t minute, uint8_t hour, uint8_t date, uint8_t month, uint8_t year);
-void twi_mr_mode(uint8_t *second, uint8_t *minute, uint8_t *hour, uint8_t *date, uint8_t *month, uint8_t *year);
+void twi_mt_mode(uint8_t current_edit, uint8_t second, uint8_t minute, uint8_t hour, uint8_t date, uint8_t month, uint16_t year);
+void twi_mr_mode(uint8_t *second, uint8_t *minute, uint8_t *hour, uint8_t *date, uint8_t *month, uint16_t *year);
 
 #endif /* TWI_H_ */

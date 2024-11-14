@@ -61,7 +61,7 @@ void port_init(void)
 	DDRF = (1<<PF1) | (1<<PF2);
 	PORTF = (1<<PF1) | (1<<PF2);
 	
-	// For TWI pullup resistors must be enabled
+	// For TWI, pullup resistors must be enabled
 	DDRD = (0<<PD0) | (0<<PD1);
 	PORTD = (1<<PD0) | (1<<PD0);
 	
@@ -84,6 +84,8 @@ int main(void)
 	uart0_init(BAUD9600);
 	lcd_init();
 	adc_init();
+	
+	// TWI initialization
 	twi_init();
 	
 	sei();

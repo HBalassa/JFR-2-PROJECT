@@ -29,16 +29,18 @@
 /******************************************************************************
 * Local Function Declarations
 ******************************************************************************/
-void twi_error(uint8_t);
-uint8_t decimal_to_bcd(uint8_t);
-uint8_t calc_day_of_week(uint16_t, uint8_t, uint8_t);
+void twi_error(uint8_t twsr_register);
+uint8_t decimal_to_bcd(uint8_t dec_num);
+uint8_t bcd_to_decimal(uint8_t bcd_num);
+void bcd_error(void);
+uint8_t calc_day_of_week(uint16_t year, uint8_t month, uint8_t date);
 
 /******************************************************************************
 * Local Function Definitions
 ******************************************************************************/
 /******************************************************************************
 * Function:         void twi_error(uint8_t twsr_register);
-* Description:		error routine if not the correct staus code happens
+* Description:		error routine if not the correct status code happens
 * Input:			TWSR register value
 * Output:			-
 * Notes:			-
@@ -87,6 +89,27 @@ uint8_t decimal_to_bcd(uint8_t dec_num) {
 }
 
 /******************************************************************************
+* Function:         uint8_t bcd_to_decimal(uint8_t bcd_num);
+* Description:		converts a bcd format number to decimal
+* Input:			bcd_num -> number in bcd_format (must be 8-bit at most)
+* Output:			the decimal number
+* Notes:			-
+******************************************************************************/
+uint8_t bcd_to_decimal(uint8_t bcd_num) {
+	// to convert from bcd to dec, convert every 4-bit to its corresponding decimal digit
+	// the input is 8-bit long
+	
+	// bcd_num = 0b0110_1001 (e.g.)
+	uint8_t second_digit = (bcd_num>>4);
+	uint8_t first_digit = (bcd_num | 0b11110000) ^ (0b11110000);
+	
+	// decimal number
+	uint8_t dec_num = second_digit*10 + first_digit;
+	
+	return dec_num;
+}
+
+/******************************************************************************
 * Function:         void bcd_error(void);
 * Description:		bcd error routine
 * Input:			-
@@ -128,14 +151,14 @@ void twi_init(void) {
 }
 
 /******************************************************************************
-* Function:         void twi_mt_mode(uint8_t current_edit, uint8_t second, uint8_t minute, uint8_t hour, uint8_t date, uint8_t month, uint8_t year);
+* Function:         void twi_mt_mode(uint8_t current_edit, uint8_t second, uint8_t minute, uint8_t hour, uint8_t date, uint8_t month, uint16_t year);
 * Description:		Two-wire Serial Interface Master Transmitter mode
 * Input:			current edit -> either TIME or DATE
 					second, minute, hour, date, month, year -> data that we want to send to the slave
 * Output:			-
 * Notes:			-
 ******************************************************************************/
-void twi_mt_mode(uint8_t current_edit, uint8_t second, uint8_t minute, uint8_t hour, uint8_t date, uint8_t month, uint8_t year) {
+void twi_mt_mode(uint8_t current_edit, uint8_t second, uint8_t minute, uint8_t hour, uint8_t date, uint8_t month, uint16_t year) {
 	// Generate START Condition
 	TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
 	
@@ -258,13 +281,13 @@ void twi_mt_mode(uint8_t current_edit, uint8_t second, uint8_t minute, uint8_t h
 }
 
 /******************************************************************************
-* Function:         void twi_mr_mode(uint8_t current_edit, uint8_t *second, uint8_t *minute, uint8_t *hour, uint8_t *date, uint8_t *month, uint8_t *year)
+* Function:         void twi_mr_mode(uint8_t current_edit, uint8_t *second, uint8_t *minute, uint8_t *hour, uint8_t *date, uint8_t *month, uint16_t *year)
 * Description:		Two-wire Serial Interface Master Receiver mode
 * Input:			*second, *minute, *hour, *date, *month, *year -> pointer adresses of the variables that we change 
 * Output:			-
 * Notes:			-
 ******************************************************************************/
-void twi_mr_mode(uint8_t *second, uint8_t *minute, uint8_t *hour, uint8_t *date, uint8_t *month, uint8_t *year) {
+void twi_mr_mode(uint8_t *second, uint8_t *minute, uint8_t *hour, uint8_t *date, uint8_t *month, uint16_t *year) {
 	// Generate START Condition
 	TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
 	
@@ -300,4 +323,111 @@ void twi_mr_mode(uint8_t *second, uint8_t *minute, uint8_t *hour, uint8_t *date,
 	if((TWSR & 0xF8) != MT_DATA_ACK) twi_error(TWSR);
 	
 	// Generate REPEATED START Condition
+	TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
+	
+	// Wait for TWINT flag set, this indicates that the REPEATED START condition has been transmitted
+	while(!(TWCR & (1<<TWINT)));
+	
+	// Check the status register
+	if((TWSR & 0xF8) != REP_START) twi_error(TWSR);
+	
+	// Send slave address + read bit (1)
+	TWDR = DS1307_ADR_R;
+	
+	// Clear TWINT to start transmission of address
+	TWCR = (1<<TWINT) | (1<<TWEN);
+	
+	// Wait for TWINT flag set, this indicates that the SLA+W has been transmitted and ACK has been received
+	while(!(TWCR & (1<<TWINT)));
+	
+	// Check the status register
+	if((TWSR & 0xF8) != MR_SLA_ACK) twi_error(TWSR);
+	
+	// Clear TWINT to start receiving the data and send ACK
+	TWCR = (1<<TWINT) | (1<<TWEA) | (1<<TWEN);
+	
+	// Wait for TWINT flag set, this indicates that the data has been received and ACK has been sent
+	while(!(TWCR & (1<<TWINT)));
+	
+	// Check the status register
+	if((TWSR & 0xF8) != MR_DATA_ACK) twi_error(TWSR);
+	
+	// Read the first received data byte (seconds)
+	uint8_t sec_bcd = (TWDR | (1<<CH)) ^ (1<<CH);
+	*second = bcd_to_decimal(sec_bcd);
+	
+	// Clear TWINT to start receiving the data and send ACK
+	TWCR = (1<<TWINT) | (1<<TWEA) | (1<<TWEN);
+	
+	// Wait for TWINT flag set, this indicates that the data has been received and ACK has been sent
+	while(!(TWCR & (1<<TWINT)));
+	
+	// Check the status register
+	if((TWSR & 0xF8) != MR_DATA_ACK) twi_error(TWSR);
+	
+	// Read the second received data byte (minutes)
+	*minute = bcd_to_decimal(TWDR);
+	
+	// Clear TWINT to start receiving the data and send ACK
+	TWCR = (1<<TWINT) | (1<<TWEA) | (1<<TWEN);
+	
+	// Wait for TWINT flag set, this indicates that the data has been received and ACK has been sent
+	while(!(TWCR & (1<<TWINT)));
+	
+	// Check the status register
+	if((TWSR & 0xF8) != MR_DATA_ACK) twi_error(TWSR);
+	
+	// Read the third received data byte (hours)
+	*hour = bcd_to_decimal(TWDR);
+	
+	// Clear TWINT to start receiving the data and send ACK
+	TWCR = (1<<TWINT) | (1<<TWEA) | (1<<TWEN);
+	
+	// Wait for TWINT flag set, this indicates that the data has been received and ACK has been sent
+	while(!(TWCR & (1<<TWINT)));
+	
+	// Check the status register
+	if((TWSR & 0xF8) != MR_DATA_ACK) twi_error(TWSR);
+	
+	// Read the fourth received data byte (Day Register)
+	uint8_t day = bcd_to_decimal(TWDR);
+	
+	// Clear TWINT to start receiving the data and send ACK
+	TWCR = (1<<TWINT) | (1<<TWEA) | (1<<TWEN);
+	
+	// Wait for TWINT flag set, this indicates that the data has been received and ACK has been sent
+	while(!(TWCR & (1<<TWINT)));
+	
+	// Check the status register
+	if((TWSR & 0xF8) != MR_DATA_ACK) twi_error(TWSR);
+	
+	// Read the fifth received data byte (Date register)
+	*date = bcd_to_decimal(TWDR);
+	
+	// Clear TWINT to start receiving the data and send ACK
+	TWCR = (1<<TWINT) | (1<<TWEA) | (1<<TWEN);
+	
+	// Wait for TWINT flag set, this indicates that the data has been received and ACK has been sent
+	while(!(TWCR & (1<<TWINT)));
+	
+	// Check the status register
+	if((TWSR & 0xF8) != MR_DATA_ACK) twi_error(TWSR);
+	
+	// Read the sixth received data byte (Month register)
+	*month = bcd_to_decimal(TWDR);
+	
+	// Clear TWINT to start receiving the data and send NACK (since the last byte will be received)
+	TWCR = (1<<TWINT) | (1<<TWEN);
+	
+	// Wait for TWINT flag set, this indicates that the data has been received and NACK has been sent
+	while(!(TWCR & (1<<TWINT)));
+	
+	// Check the status register
+	if((TWSR & 0xF8) != MR_DATA_NACK) twi_error(TWSR);
+	
+	// Read the seventh (last) data byte (Year register)
+	*year = bcd_to_decimal(TWDR) + 2000;
+	
+	// Generate STOP Condition
+	TWCR = (1<<TWINT) |(1<<TWSTO) | (1<<TWEN);
 }
