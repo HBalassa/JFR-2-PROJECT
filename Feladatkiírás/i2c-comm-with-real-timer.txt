@@ -1,0 +1,185 @@
+**************************************************
+AT90CAN32 I2C COMMUNICATION WITH DS1307 IC
+**************************************************
+
+**************************
+INITIALIZE TWI
+**************************
+* The DS1307 operates in the standard mode, so SCL Clock Frequency can be at most 100kHz
+* The calculation of SCL Clock Frequency:
+  - SCL frequency = (CLKio)/(16 + 2*(TWBR)*4^(TWPS))
+  - CLKio - System I/O Clock Frequency: 8MHz (8_000_000 Hz)
+  - TWBR - Value of the TWI Bit Register: 0...255
+  - TWPS - Value of the Prescaler Bits on TWSR Register: 1/4/16/64
+* in our case, since SCL frequency = 100_000 Hz:  (calculated by excel)
+  - TWBR = 8
+  - TWPS = 1
+* code:
+/*
+void twi_init(void) {
+  // set SCL frequency to 100kHz
+  TWBR = 0x08;
+  TWSR = (0<<TWPS1) | (0<<TWPS0);
+}
+*/
+
+**************************
+SEND DATA TO DS1307
+Master Transmitter mode
+**************************
+* code:
+/*
+// TWSR status codes defines (prescaler bits are 0 or are masked to 0)
+#define START 0x08
+#define REP_START 0x10
+#define MT_SLA_ACK 0x18
+#define MT_SLA_NACK 0x20
+#define MT_DATA_ACK 0x28
+#define MT_DATA_NACK 0x30
+#define ARB_LOST 0x38
+
+// DS1307 slave address
+#define DS1307_ADR 0b1101000
+
+// edit time or date
+#define TIME 0
+#define DATE 1
+
+// DS1307 Registers Address
+#define SEC 0x00
+#define MIN 0x01
+#define HOU 0x02
+#define DAY 0x03
+#define DAT 0x04
+#define MON 0x05
+#define YEA 0x06
+#define CTRL 0x07
+
+// DS1307_SEC Register bits
+#define CH 7
+
+// DS1307_HOU Register bits
+#define AMPM 5
+#define HOURMODE 6
+
+// DS1307_CTRL Register bits
+#define RS0 0
+#define RS1 1
+#define SQWE 4
+#define OUT 7
+
+// global variables
+uint8_t = current_edit = TIME;
+
+// Generate START condition
+TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
+
+// Wait for TWINT flag set, this indicates that the START condition has been transmitted
+while(!(TWCR & (1<<TWINT)));
+
+// Check the status register
+if((TWSR & 0xF8) != START) twi_error(TWSR);
+
+// Send slave address + write bit (0)
+TWDR = (DS1307_ADR<<1) | (0<<TWD0);
+
+// Clear TWINT to start transmission of address
+TWCR = (1<<TWINT) | (1<<TWEN);
+
+// Wait for TWINT flag set, this indicates that the SLA+W has been transmitted and ACK has been received
+while(!(TWCR & (1<<TWINT)));
+
+// Check the status register
+if((TWSR & 0xF8) != MT_SLA_ACK) twi_error(TWSR);
+
+// Send word address (which sets the register pointer on the DS1307)
+// question: What is the word address? Maybe the register address?
+if(current_edit == TIME) {
+  // Address of the first time register (seconds)
+  TWDR = SEC;
+} else if(current_edit == DATE) {
+  // Address of the first date register (day)
+  TWDR = DAY;
+}
+
+// Clear TWINT to start transmission of data
+TWCR = (1<<TWINT) | (1<<TWEN);
+
+// Wait for TWINT flag set, this indicates that the data has been transmitted and ACK/NACK has been received
+while(!(TWCR & (1<<TWINT)));
+
+// Check the status register
+if((TWSR & 0xF8) != MT_DATA_ACK) twi_error(TWSR);
+
+// Send the data
+if(current_edit == TIME) {
+  // Data for the seconds register
+  // IMPORTANT! Data shall be written in BCD format!
+  if(dec_to_bcd(SECONDS) == -1) bcd_error(); // do some error routine
+  TWDR = dec_to_bcd(SECONDS) | (0<<CH);
+} else if(current_edit == DATE) {
+  // Data for the day register
+  TWDR = calc_day_of_week(YEAR, MONTH, DATE);
+}
+
+
+*/
+/*
+// Error routine if something went wrong
+void twi_error(uint8_t TWSR_register_value) {
+  uint8_t status_code = TWSR_register_value & 0xF8;
+
+  switch(status_code) {
+    case START:
+      break;
+    case REP_START:
+      break;
+    case MT_SLA_ACK:
+      break;
+    case MT_SLA_NACK:
+      break;
+    case MT_DATA_ACK:
+      break;
+    case MT_DATA_NACK:
+      break;
+    case ARB_LOST:
+      break;
+  }
+}
+*/
+/*
+uint8_t decimal_to_bcd(uint8_t dec_num) {
+  // to convert from dec to bcd, just simply convert every digit to a 4-bit binary number
+  // the input is between 0...99
+  if(dec_num > 99) return -1;
+
+  // dec_num = second_digit*10 + first_digit
+  uint8_t first_digit = dec_num % 10;
+  uint8_t second_digit = dec_num / 10;
+
+  // number in bcd
+  uint8_t bcd_num = (second_digit<<4) | (first_digit);
+
+  return bcd_num;
+}
+*/
+/*
+void bcd_error() {
+}
+*/
+/*
+uint8_t calc_day_of_week(uint16_t year, uint8_t month, uint8_t date) {
+  // output is between 0...6
+  // day of the week is calculated by the following formula
+  uint8_t century = year/100;
+  uint8_t day_of_week = ((int)(date + floor(2.6*month-0.2) - 2*century + year + floor(year/4) + floor(century/4))) % 7;
+  return day_of_week;
+}
+*/
+
+**************************
+QUESTIONS
+**************************
+* CH register
+* Control register
+* word address
