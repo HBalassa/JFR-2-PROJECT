@@ -146,6 +146,11 @@ uint8_t calc_day_of_week(uint16_t year, uint8_t month, uint8_t date) {
 					calculated from excel
 ******************************************************************************/
 void twi_init(void) {
+	// For TWI, pullup resistors must be enabled
+	DDRD = (0<<PD0) | (0<<PD1);
+	PORTD = (1<<PD0) | (1<<PD0);
+	
+	// Set clock frequency
 	TWBR = 0x08;
 	TWSR = (0<<TWPS1) | (0<<TWPS0);
 }
