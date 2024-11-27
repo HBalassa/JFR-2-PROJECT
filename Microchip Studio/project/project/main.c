@@ -27,7 +27,7 @@
 #define TIME 0
 #define DATE 1
 
-#define NOEDIT -1
+#define NOEDIT 2
 #define EDIT 0
 #define SAVE 1
 
@@ -67,7 +67,7 @@ uint8_t perc = 0;
 uint8_t ora = 0;
 uint8_t nap = 0;
 uint8_t honap = 0;
-uint8_t ev = 0;
+uint16_t ev = 0;
 
 // edited value variable
 uint8_t edited_value = 0;
@@ -104,6 +104,9 @@ void port_init(void)
 	
 	DDRD = (0<<PD0);
 	PORTD = (1<<PD0);
+	
+	DDRB = 0xff;
+	PORTB = 0;
 	
 	DDRF = (1<<PF1) | (1<<PF2);
 	PORTF = (1<<PF1) | (1<<PF2);
@@ -170,7 +173,8 @@ int main(void)
 		{
 			// Set time and save time -> BUTTON1 logic
 			if((PINA & (1<<PA0)) == 0 && PA0_pushed == FALSE) {
-				if(curr_edit == NOEDIT) {
+				if(curr_edit == NOEDIT || curr_edit == TIME) {
+					PORTB ^= (1<<PB0);
 					curr_edit = TIME;
 					
 					edited_value = 0;
@@ -193,7 +197,8 @@ int main(void)
 			
 			// Set date and save date -> BUTTON5 logic
 			if((PINA & (1<<PA4)) == 0 && PA4_pushed == FALSE) {
-				if(curr_edit == NOEDIT) {
+				if(curr_edit == NOEDIT || curr_edit == DATE) {
+					PORTB ^= (1<<PB0);
 					curr_edit = DATE;
 					
 					edited_value = 0;
@@ -211,7 +216,7 @@ int main(void)
 				
 				PA4_pushed = TRUE;
 			}
-			if((PINA & (1<<PA4)) == (1<<PA4) && PA4_pushed == TRUE) PA4_pushed == FALSE;
+			if((PINA & (1<<PA4)) == (1<<PA4) && PA4_pushed == TRUE) PA4_pushed = FALSE; 
 			
 			// change between values that will be edited -> BUTTON4 logic
 			if((PINA & (1<<PA3)) == 0 && PA3_pushed == FALSE) {
@@ -340,11 +345,12 @@ int main(void)
 			if(curr_edit == TIME) {
 				if(timer_cnt - time_0 < 100) {
 					if(time_edit_save == EDIT) sprintf(string_for_write, "IDO SZERKESZTESE");
-					if(time_edit_save == SAVE) sprintf(string_for_write, "IDO ELMENTVE");
+					if(time_edit_save == SAVE) sprintf(string_for_write, "IDO ELMENTVE    ");
 				} else {
 					if(time_edit_save == EDIT) sprintf(string_for_write, "%02d:%02d %10s", ora, perc, edited_text);
 					if(time_edit_save == SAVE) {
-						sprintf(string_for_write, "%04%02%02 %02%02 %02", ev, honap, nap, ora, perc, homerseklet);
+						//sprintf(string_for_write, "%04d%02d%02d %02d%02d %02d", ev, honap, nap, ora, perc, homerseklet);
+						sprintf(string_for_write, "%04d%02d%02d %02d%02d %02d", ev, honap, nap, ora, perc, masodperc);
 						curr_edit = NOEDIT;
 					}
 				}
@@ -352,23 +358,26 @@ int main(void)
 			
 			if(curr_edit == DATE) {
 				if(timer_cnt - time_0 < 100) {
-					if(date_edit_save == EDIT) sprintf(string_for_write, "DATUM SZERK.");
-					if(date_edit_save == SAVE) sprintf(string_for_write, "DATUM ELMENTVE");
+					if(date_edit_save == EDIT) sprintf(string_for_write, "DATUM SZERK.    ");
+					if(date_edit_save == SAVE) sprintf(string_for_write, "DATUM ELMENTVE  ");
 				} else {
 					if(date_edit_save == EDIT) sprintf(string_for_write, "%04d-%02d-%02d %5s", ev, honap, nap, edited_text);
 					if(date_edit_save == SAVE) {
-						sprintf(string_for_write, "%04%02%02 %02%02 %02", ev, honap, nap, ora, perc, homerseklet);
+						// sprintf(string_for_write, "%04d%02d%02d %02d%02d %02d", ev, honap, nap, ora, perc, homerseklet);
+						sprintf(string_for_write, "%04d%02d%02d %02d%02d %02d", ev, honap, nap, ora, perc, masodperc);
 						curr_edit = NOEDIT;
 					}
 				}
 			}
 			
 			if(curr_edit == NOEDIT) {
-				sprintf(string_for_write, "%04%02%02 %02%02 %02", ev, honap, nap, ora, perc, homerseklet);
+				// sprintf(string_for_write, "%04d%02d%02d %02d%02d %02d", ev, honap, nap, ora, perc, homerseklet);
+				sprintf(string_for_write, "%04d%02d%02d %02d%02d %02d", ev, honap, nap, ora, perc, masodperc);
 			}
-				
-			lcd_clear_display();
+			
+			lcd_set_cursor_position(0);
 			lcd_write_string(string_for_write);
+			
 			
 			task_100ms=FALSE;
 		}
@@ -377,7 +386,6 @@ int main(void)
 			if(curr_edit == NOEDIT) {
 				twi_mr_mode(&masodperc, &perc, &ora, &nap, &honap, &ev);	
 			}
-			
 			task_500ms=FALSE;
 		}
     }
