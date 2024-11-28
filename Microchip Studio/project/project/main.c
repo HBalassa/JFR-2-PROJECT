@@ -17,6 +17,7 @@
 #include "uart.h"
 #include "peripherals.h"
 #include "twi.h"
+#include "can.h"
 
 /******************************************************************************
 * Macros
@@ -31,6 +32,9 @@
 #define EDIT 0
 #define SAVE 1
 
+//CAN interrupt:
+#define PD0_ENA_DELAY 80
+
 /******************************************************************************
 * Constants
 ******************************************************************************/
@@ -40,7 +44,7 @@
 * Global Variables
 ******************************************************************************/
 uint16_t timer_cnt=0;
-uint8_t task_10ms = FALSE, task_100ms = FALSE, task_500ms = FALSE;
+uint8_t task_10ms = FALSE, task_100ms = FALSE, task_500ms = FALSE, task_1s = FALSE;
 uint16_t ad_result;
 
 // button pressed
@@ -76,6 +80,17 @@ char edited_text[6];
 // temperature variable
 uint16_t homerseklet = 0;
 
+//CAN
+uint8_t PD0_re_enable_cnt = 0;
+
+uint8_t can_rx_data[8];
+uint32_t can_rx_id = 0x00000011;
+uint8_t can_rx_extended_id = FALSE;
+uint8_t can_rx_length;
+uint8_t can_msg_received=FALSE;
+
+uint8_t can_tx_data[8];
+
 
 /******************************************************************************
 * External Variables
@@ -108,8 +123,8 @@ void port_init(void)
 	DDRB = 0xff;
 	PORTB = 0;
 	
-	DDRF = (1<<PF1) | (1<<PF2);
-	PORTF = (1<<PF1) | (1<<PF2);
+	DDRF = (0<<PF0)| (1<<PF1) | (1<<PF2) | (1<<PF3);
+	PORTF = (0<<PF0)| (1<<PF1) | (1<<PF2) | (1<<PF3);
 	
 	DDRC = (1<<LCD_E) | (1<<LCD_RS) | (1<<LCD_D7) | (1<<LCD_D6) | (1<<LCD_D5) | (1<<LCD_D4);
 	PORTC = (0<<LCD_E) | (0<<LCD_RS) | (0<<LCD_D7) | (0<<LCD_D6) | (0<<LCD_D5) | (0<<LCD_D4);
@@ -161,10 +176,17 @@ int main(void)
 	// TWI initialization
 	twi_init();
 	
+	//CAN initialization 
+	can_init();
+	CAN_ReceiveEnableMob(0, can_rx_id, can_rx_extended_id, 8);
+	
 	sei();
 	
 	// String for time and date
 	char string_for_write[50];
+	
+	//String for can
+	char string_for_write_can[50];
 	
     /* Replace with your application code */
     while (1) 
@@ -186,6 +208,7 @@ int main(void)
 						time_edit_save = EDIT;
 					} else if(time_edit_save == EDIT) {
 						time_edit_save = SAVE;
+						masodperc = 0;
 						twi_mt_mode(curr_edit, masodperc, perc, ora, nap, honap, ev);
 					}
 					
@@ -336,7 +359,10 @@ int main(void)
 				PA2_pushed = TRUE;
 			}
 			if((PINA & (1<<PA2)) == (1<<PA2) && PA2_pushed == TRUE) PA2_pushed = FALSE;
-			
+
+			//CAN			
+			if(PD0_re_enable_cnt<PD0_ENA_DELAY) PD0_re_enable_cnt += 10; //pergésmentesítés
+
 			
 			task_10ms=FALSE;
 		}
@@ -376,8 +402,7 @@ int main(void)
 			}
 			
 			lcd_set_cursor_position(0);
-			lcd_write_string(string_for_write);
-			
+			lcd_write_string(string_for_write);			
 			
 			task_100ms=FALSE;
 		}
@@ -387,6 +412,32 @@ int main(void)
 				twi_mr_mode(&masodperc, &perc, &ora, &nap, &honap, &ev);	
 			}
 			task_500ms=FALSE;
+		}
+		
+		if(task_1s)
+		{
+			//CAN küldés
+			
+			uint8_t cnt_4bit = 3;
+			
+			uint8_t ev_rovid = ev % 100;
+			uint8_t honap_0_bit = honap & 1;
+			uint8_t honap_123_bit = honap & (0b00001110);
+			uint8_t hetnapja = 5;
+			uint8_t nap_01_bit = nap & (0b00000011);
+			uint8_t nap_234_bit = nap & (0b00011100);
+			uint8_t masodperc_01_bit = masodperc & (0b00000011);
+			uint8_t masodperc_2345_bit = masodperc & (0b00111100);
+			
+			uint8_t can_tx_data[5];
+			can_tx_data[0] = ev_rovid | (honap_0_bit<7);
+			can_tx_data[1] = honap_123_bit | (hetnapja<<3) | (nap_01_bit<<6);
+			can_tx_data[2] = nap_234_bit | (ora<<3);
+			can_tx_data[3] = perc | (masodperc_01_bit<<6);
+			can_tx_data[4] = masodperc_2345_bit |(cnt_4bit<<4);
+			CAN_SendMob(1,0x1FFFFFFF,TRUE,2,can_tx_data);
+			CAN_SendMob(2,0x000007FF,FALSE,2,can_tx_data);
+			task_1s = FALSE;
 		}
     }
 }
@@ -399,7 +450,8 @@ ISR(TIMER0_COMP_vect) //timer CTC interrupt
 	timer_cnt++;
 	if(timer_cnt % 1 == 0) task_10ms = TRUE;
 	if(timer_cnt % 10 == 0) task_100ms = TRUE;
-	if(timer_cnt % 50 == 0) task_500ms =TRUE;
+	if(timer_cnt % 50 == 0) task_500ms = TRUE;
+	if (timer_cnt % 100 == 0) task_1s = TRUE;
 }
 
 ISR(INT0_vect) //extint 0 interrput
@@ -416,4 +468,26 @@ ISR(USART0_RX_vect)
 ISR(ADC_vect)
 {
 	ad_result = ADC;
+}
+
+ISR(CANIT_vect) //CAN megszakítás
+{
+	uint8_t i, dlc = 0;
+	
+
+	CANPAGE = 0;	// select MOb0, reset FIFO index
+
+	if ( (CANSTMOB & (1<<RXOK)) != FALSE)	// Receive Complete
+	{
+		
+		dlc = CANCDMOB & 0x0F;
+		
+		for (i=0; i<dlc; i++) can_rx_data[i] = CANMSG;
+		
+		CANSTMOB &= ~(1<<RXOK);	// clear RXOK flag
+		CAN_ReceiveEnableMob(0, can_rx_id, can_rx_extended_id, 8);	// enable next reception  on mob 0
+	}
+	can_rx_length=dlc;
+	can_msg_received=1;
+	//PORTA = PORTA ^ (1<<PA7);
 }
