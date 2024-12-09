@@ -1,0 +1,245 @@
+****************************
+DS18S20 DATASHEET JEGYZET
+****************************
+
+****************************
+GENERAL DESCRIPTION
+****************************
+* digital termometer provides 9-bit Celsius temperature measurements
+* has an alarm function that is for user-programmer upper and lower trigger points
+* communicates in a 1-Wire bus
+  - requires only 1 data wire 
+  - and a ground, but its in the ic's pin 
+  - requires only one port pin to communicate 
+* can derive power directly from the data line 
+* many DS18S20 can function on the same bus
+
+****************************
+BENEFITS AND FEATURES
+****************************
+* measures temperature from -55 to +125 °C
+* +- 0.5 °C accuracy from -10 to +85 °C
+* 9-bit resolution
+
+****************************
+PIN CONFIGURATION
+****************************
+* 3-pin package: DS18S20 
+  - 1: GND 
+  - 2: DQ
+    + data I/O 
+    + open drain 1-wire interface pin 
+    + also provides power to the device when in parasite power mode 
+  - 3: Vdd
+    + optional Vdd
+    + must be grounded when operation in parasite power mode 
+
+****************************
+OPERATION
+****************************
+* 64-bit ROM
+  - DS18S20 unique identfier 
+* Scratchpad
+  - 2-byte temperature regsiter (digital output of the sensor)
+  - 1-byte upper and lower alarm triggers (EEPROM memory) 
+* uses Maxim's exclusive 1-wire bus protocol -> bus communication using the control signal 
+* control line requires a weak pullup resistor 
+* the master indentifies and addresses the device using his unique 64-bit identifier
+* can operate without an external power supply
+  - than the power is supplied through the 1-wire pullup resistor via DQ pin, when the bus is high
+  - when it's low, the internal capacitor Cpp supplies power
+* can operate by an external supply too
+
+****************************
+OPERATION - MEASURING TEMPERATURE
+****************************
+* direct-to-ditial temperature sensor (no ADC needed) 
+* output -> 9-bit resolution, which corresponds to 0.5 °C steps
+* initiate temperature measurement -> master must issue a Convert T [44h] command
+* after this the resulting thermal data is stored in the 2-byte temperature register in the scratch pad memory 
+* if the DS18S20 is powered by external supply, the master can 'read-time slots' after Convert T command, and the DS18S20 will respond with 0, while the temperature conversion is in progress and 1 when it's completed
+* if the DS18S20 is powered with parasite mode, this method cannot be used, because the bus must be pulled high by a strong pullup during the temperature conversion 
+* otuput data is in Celsius 
+* the temperature data is stored as a 16-bit sign-extended two's complement number in the temperature register 
+* Temperature register:
+  - LS Byte (Bits 7-0)
+    + Bits 7-1: 2^(n-1) (so in bit 7, 1 means 2^6)
+    + Bit 0: 2^-1
+  - MS byte (Bits 15-8) 
+    + Bits 15-8: sign bits; if 0 -> positive, if 1 -> negative
+* so how to convert from  16-bit sign-extended two's complement to decimal:
+  - if the number is positive (MS Byte is all 0)
+    + simply just convert the LSB to a decimal number in a way the the first bit (0-bit) means 2^-1 !
+  - if the number is negative (MS Byte is all 1)
+    + invert each bit (except Bit 0 in LS Byte)
+    + add 1 to this number 
+    + convert the resulted binary to decimal and multiply it by (-1)
+    + add the Bit 0 in LS Byte to the number (if Bit 0 in LS Byte is 1 then add +0.5 to the number)
+* Resolutions greater than 9-bits can be calculated using the data from the temperature, the COUNT REMAIN and COUNT PER °C registers:
+  - TEMPERATURE = TEMP_READ - 0.25 + (COUNT_PER_C - COUNR_REMAIN)/(COUNT_PER_C)
+  - TEMP_READ -> temp register data but bit 0 is truncated
+
+****************************
+OPERATION - ALARM SIGNALING
+****************************
+* After DS18S20 performs temperature conversion the temperature is compared to the user-defined two's complement alarm trigger values stored in TH and TL registers
+  - TH & TL Registers: 
+    + Bit 7: sign bit; if 0 -> positive, if 1 -> negative 
+    + Bit 6-0: 2^n value 
+* these data are in EEPROM so after shutting down the power supply these remain
+* only bits through 8-1 in temperature register is compared with TH and TL, and if the condition exists, then an alarm flag is set inside the DS18S20
+* the flag is updated after every temperature measurement, therefore if the alarm condition goes away the flag is turend off after the next temp conversion 
+* the master can check the alarm flag status by issuing an Alarm Search command [ECh]
+* any DS18S20 with a set alarm flag will respond, so than the master can determine which DS18S20 has experienced an alarm condition 
+* if alarm condition exists, and TH or TL settings are changed, another temperature conversion should be done to validate the alarm condition 
+
+****************************
+POWERING THE DS18S20
+****************************
+* can be powered by an external supply on Vdd pin; or can operate in parasite mode which allows to function with a local external supply
+
+PARASITE POWER
+* if it is used in parasite mode the Vdd pin must be grounded 
+* During temperature conversion or data is being copied from scratchpad to EEPROM a strong pullup register is needed, and to accomplish this we use a MOSFET
+* the 1-wire bus must be switched to the strong pullup within 10 mikrosec (max) after the Convert T or Copy Scratchpad command is issued, and the bus must be held high by the pullup for the duration of conversion or data transfer
+* no other activity can happen when this strong pullup is enabled
+
+EXTERNAL SUPPLY 
+* an external supply is connected to Vdd
+* the MOSFET pullup is not required 
+* the 1-wire bus is free to carry other traffic during the temperature conversion time 
+
+* the use of parasite mode is not required for temperature above 100°C -> so for us it's not good
+* some situations the master does not know if the DS18S20 is on parasite or external supply mode, so to get that information the master can issue a Skip ROM [CCh] command followed by a Read Power Supply [B4h] command followed by a 'read-time slot'. During this 'read-time slot' the parasite mode will pull the bus LOW, nad the external supply mode will pull the bus HIGH
+* so if the bus is LOW, the master knows it must supply a strong pullup resitor during the temperature conversion 
+
+****************************
+64-BIT LASERED ROM CODE 
+****************************
+* each DS18S20 contains a unique 64-bit code stored in ROM 
+* the LS Byte of ROM containst the DS18S20 family code: 10h
+* the next 48-bit contains unique serial number 
+* the MS Byte contains a cyclic redundancy check (CRC) byte that is calculated from the first 56 bits of the ROM code 
+
+****************************
+MEMORY 
+****************************
+* the memory consists of an SRAM scratchpad with nonvolatile EEPROM for TH and TL 
+* if the alarm function is not used, the TH and TL registers can serve as general purpuse memory 
+* Memory bytes: 
+  - Byte 0 & 1: Temperature Registers 
+    + 0 -> LS Byte 
+    + 1 -> MS Byte 
+    + these bytes are read-only 
+  - Byte 2 & 3: TH and TL Registers 
+    + data is written using the Write Scratchpad [4Eh] command
+    + data must be transmitted starting with the least significant bit of byte 2
+  - Byte 4 & 5: Reserved bytes for internal use and cannot be overwritten; all return 1s when read 
+  - Byte 6 & 7: COUNT REMAIN & COUNT PER °C Regsiters 
+    + can be used to calculate extended resolution results
+  - Byte 8: CRC code Register 
+    + read-only
+* to verify data integrity, the scratchpad can be read with the Read Scratchpad [BEh] command after the data is written
+* when reading data is transferred over the 1-wire bus starting with the least significant bit of byte 0
+* to transfer the TH and TL data from the scratchpad to EEPROM, the master must issue the Copy Scratchpad [48h] command
+* data can be reloaded from EEPROM to scratchpad by using the Recall E2 [B8h] command 
+* the master can issue 'read-time slots' following the Recall E2 command and the DS18S20 will indicate the status of the recall by transmitting 0 while the recall is in progress, and 1 when the recall is done 
+
+****************************
+CRC GENERATION
+****************************
+* CRC bytes are provided as part of the DS18S20 64-bit ROM code, and the 9th byte of the scratchpad memory 
+* the ROM code CRC is calculated from the first 56 bits of the ROM code and contains the MS byte of the ROM 
+* the scratchpad CRC is calculated from the data in the scratchpad, and it changes when data changes 
+* it provides the bus master with a method of data validation when data is read from DS18S20 
+* to verify that the data has been read properly, the bus master must re-calculate the CRC from the received data and than compare this either with the ROM code CRC (for ROM reads) or the scratchpad CRC (for scratchpad reads)
+* if the datas matching the data has been received error free 
+* the comparison and the decision to continue with an operation are determined by the bus master 
+* the equivalent polynomial function of the CRC is:
+  - CRC = X^8 + X^5 + X^4 + 1
+* the bus master can re-calculate the CRC and compare it to the CRC values from the DS18S20 using the polynomial generator:
+  + the circuit consists of a shift register and XOR gates 
+  + the shift register bits are initialized to 0
+  + starting with the LS bit of the ROM or the LS bit of byte 0 in scratchpad, one bit at a time shall be shifted into the shift register
+  + After shifting the 56th bit from ROM or the MS bit of byte 7 in from the scratchpad the polinomial generator will contain the re-calculated CRC 
+  + next the 8-bit ROM code or scratchpad CRC from the DS18S20 must be shifted into the circuit 
+  + at this point if the re-calculated CRC was correct the shift register will contain all 0s
+
+****************************
+1-WIRE BUS SYSTEM 
+****************************
+* uses a single bus master to control one or more slave devcices 
+* the DS18S20 is always slave 
+* when there's only one slave -> 'single-drop' system
+* multiple slaves -> 'multidrop' system 
+* all data and commands transmitted LS bit first 
+* three main topics above:
+  - HARDWARE CONFIGURATION 
+  - TRANSACTION SEQUENCE 
+  - 1-WIRE SIGNALING
+
+****************************
+HARDWARE CONFIGURATION 
+****************************
+* single data line 
+* each device interfaces to the data line via an open drain 
+* the DQ pin is open drain as well 
+* the idle state of the bus is high 
+* if a transaction needs to be suspended -> shall be left in the state of idle 
+* if the bus is held for more than 480 mikrosec, all components are reset 
+
+****************************
+TRANSACTION SEQUENCE 
+****************************
+* transaction sequence: 
+  1. Initialization
+  2. ROM Command (followed by any required data exchange)
+  3. DS18S20 Function Command (followed by any required data exchange)
+* it is important to follow this sequence 
+* the DS18S20 will not respond if any of this steps are missing 
+* Exceptions are the Search ROM and Alarm Search commands; after issuing either of these ROM commands the master must return to Step 1 in the sequence 
+
+****************************
+IUNITIALIZATION
+****************************
+* all transactions begin with an initialization 
+* initialization consists of: 
+  - reset pulse transmitted by the master
+  - followed by presence pulse transmitted by the slave 
+* the presence pulse lets the bus master know that slave devices are on the bus and ready to operate 
+
+****************************
+ROM Commands
+****************************
+* after the presence pulse is detected, the master can issue a ROM command
+* these commands operate on the unique 64-bit ROM codes of each slave device and allow the master to single out a specific device 
+* these commands also allow the master to determine how many and what type of devices are presented on the bus and if any of them had an alarm condition 
+* five ROM Commands, each are 8-bit long 
+* an appropriate ROM command must be issued befure issuing the DS18S20 function commands 
+
+SEARCH ROM [0xF0]
+* when the system is initially powered up, the master must identify the ROM codes of all slave devices on the bus. This allows the master to determine the number of slaves and their device types 
+* master learns the ROM codes through process of elimination which requires the master to perform a Search ROM cycle (Search ROM command followed by data exchange) as many times as necessary to identify all of the slave devices 
+* if only one slave on the bus, a simple Read ROM command can be used instead of this 
+* after every Search ROM cycle the master must return to step 1 (initialization)
+
+READ ROM [0x33]
+* only used when there's one slave on the bus 
+* it allows the bus master to read the slave's 64-bit ROM code without using the Search ROM procedure 
+* if this is used when more than one slave presents, data collision will occur, when all the slaves wants to respond the same time 
+
+MATCH ROM [0x55]
+* the match ROM followed by a 64-bit ROM code sequence allows the bus master to address a specific slave device on a multidrop/single-drop bus 
+* only the slave that has the 64-bit ROM code will respond to the function command issued by the master 
+* all others wait for a reset pulse 
+
+SKIP ROM [0xCC]
+* the master can use this to address all devices on the bus simultaneously without sending any ROM code information 
+* READ SCRATCHPAD command can only follow tthis if there's a single slave on the bus 
+* in this case time is saved by allowing the master to read from the slave without sending the device's 64-bit ROM code
+
+ALARM SEARCH [0xEC]
+* operation is identical of the Search ROM command, except that only slaves with a set alarm flag will respond
+* this allows the master to determine if any DS18S20 experiences an alarm condition
+* After the Alarm Search cycle (ALARM SEARCH followed by data exchange) the bus must return to step 1 (initialization) 
+
