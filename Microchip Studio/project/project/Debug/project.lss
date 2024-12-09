@@ -298,9 +298,17 @@ Disassembly of section .text:
      1da:	08 95       	ret
 
 000001dc <lcd_write_string>:
+* Input:
+* Output:
+* Notes:
+******************************************************************************/
+void lcd_write_string(char *c)
+{
      1dc:	cf 93       	push	r28
      1de:	df 93       	push	r29
      1e0:	ec 01       	movw	r28, r24
+	char *p = c;
+	while(*p != 0) lcd_write_char(*p++);
      1e2:	02 c0       	rjmp	.+4      	; 0x1e8 <lcd_write_string+0xc>
      1e4:	21 96       	adiw	r28, 0x01	; 1
      1e6:	d2 df       	rcall	.-92     	; 0x18c <lcd_write_char>
@@ -312,51 +320,25 @@ Disassembly of section .text:
      1f2:	08 95       	ret
 
 000001f4 <port_init>:
-* Output:
-* Notes:
-******************************************************************************/
-void port_init(void)
-{
-	DDRA = (0<<PA0) | (0<<PA1) | (0<<PA2) | (0<<PA3) | (0<<PA4);
      1f4:	11 b8       	out	0x01, r1	; 1
-	PORTA = (1<<PA0) | (1<<PA1) | (1<<PA2) | (1<<PA3) | (1<<PA4);
      1f6:	8f e1       	ldi	r24, 0x1F	; 31
      1f8:	82 b9       	out	0x02, r24	; 2
-	
-	DDRD = (0<<PD0);
      1fa:	1a b8       	out	0x0a, r1	; 10
-	PORTD = (1<<PD0);
      1fc:	81 e0       	ldi	r24, 0x01	; 1
      1fe:	8b b9       	out	0x0b, r24	; 11
-	
-	DDRB = 0xff;
      200:	8f ef       	ldi	r24, 0xFF	; 255
      202:	84 b9       	out	0x04, r24	; 4
-	PORTB = 0;
      204:	15 b8       	out	0x05, r1	; 5
-	
-	DDRF = (1<<PF1) | (1<<PF2);
      206:	86 e0       	ldi	r24, 0x06	; 6
      208:	80 bb       	out	0x10, r24	; 16
-	PORTF = (1<<PF1) | (1<<PF2);
      20a:	81 bb       	out	0x11, r24	; 17
-	
-	DDRC = (1<<LCD_E) | (1<<LCD_RS) | (1<<LCD_D7) | (1<<LCD_D6) | (1<<LCD_D5) | (1<<LCD_D4);
      20c:	8c ef       	ldi	r24, 0xFC	; 252
      20e:	87 b9       	out	0x07, r24	; 7
-	PORTC = (0<<LCD_E) | (0<<LCD_RS) | (0<<LCD_D7) | (0<<LCD_D6) | (0<<LCD_D5) | (0<<LCD_D4);
      210:	18 b8       	out	0x08, r1	; 8
      212:	08 95       	ret
 
 00000214 <calc_month_length>:
-* Description:      calculates the length of a month
-* Input:			month, year
-* Output:			the length of the month, either: 28, 29, 30, 31
-* Notes:
-******************************************************************************/
-uint8_t calc_month_length(uint8_t month, uint16_t year) {
      214:	ab 01       	movw	r20, r22
-	switch(month) {
      216:	90 e0       	ldi	r25, 0x00	; 0
      218:	fc 01       	movw	r30, r24
      21a:	31 97       	sbiw	r30, 0x01	; 1
@@ -366,9 +348,6 @@ uint8_t calc_month_length(uint8_t month, uint16_t year) {
      222:	e6 5b       	subi	r30, 0xB6	; 182
      224:	ff 4f       	sbci	r31, 0xFF	; 255
      226:	0c 94 88 09 	jmp	0x1310	; 0x1310 <__tablejump2__>
-		case 1: return 31;
-		case 2: {
-			if((year % 400) == 0 || ((year % 4) == 0 && (year % 100) != 0)) return 29;
      22a:	9b 01       	movw	r18, r22
      22c:	32 95       	swap	r19
      22e:	22 95       	swap	r18
@@ -416,65 +395,21 @@ uint8_t calc_month_length(uint8_t month, uint16_t year) {
      286:	42 17       	cp	r20, r18
      288:	53 07       	cpc	r21, r19
      28a:	59 f4       	brne	.+22     	; 0x2a2 <calc_month_length+0x8e>
-			else return 28;
      28c:	8c e1       	ldi	r24, 0x1C	; 28
      28e:	08 95       	ret
-		case 9: return 30;
-		case 10: return 31;
-		case 11: return 30;
-		case 12: return 31;
-	}
-}
      290:	08 95       	ret
-* Output:			the length of the month, either: 28, 29, 30, 31
-* Notes:
-******************************************************************************/
-uint8_t calc_month_length(uint8_t month, uint16_t year) {
-	switch(month) {
-		case 1: return 31;
      292:	8f e1       	ldi	r24, 0x1F	; 31
      294:	08 95       	ret
-		case 2: {
-			if((year % 400) == 0 || ((year % 4) == 0 && (year % 100) != 0)) return 29;
-			else return 28;
-		}
-		case 3: return 31;
-		case 4: return 30;
      296:	8e e1       	ldi	r24, 0x1E	; 30
      298:	08 95       	ret
-******************************************************************************/
-uint8_t calc_month_length(uint8_t month, uint16_t year) {
-	switch(month) {
-		case 1: return 31;
-		case 2: {
-			if((year % 400) == 0 || ((year % 4) == 0 && (year % 100) != 0)) return 29;
      29a:	8d e1       	ldi	r24, 0x1D	; 29
      29c:	08 95       	ret
-			else return 28;
      29e:	8c e1       	ldi	r24, 0x1C	; 28
      2a0:	08 95       	ret
-******************************************************************************/
-uint8_t calc_month_length(uint8_t month, uint16_t year) {
-	switch(month) {
-		case 1: return 31;
-		case 2: {
-			if((year % 400) == 0 || ((year % 4) == 0 && (year % 100) != 0)) return 29;
      2a2:	8d e1       	ldi	r24, 0x1D	; 29
-		case 9: return 30;
-		case 10: return 31;
-		case 11: return 30;
-		case 12: return 31;
-	}
-}
      2a4:	08 95       	ret
 
 000002a6 <main>:
-* Input:
-* Output:
-* Notes:
-******************************************************************************/
-int main(void)
-{
      2a6:	cf 93       	push	r28
      2a8:	df 93       	push	r29
      2aa:	cd b7       	in	r28, 0x3d	; 61
@@ -485,62 +420,38 @@ int main(void)
      2b4:	de bf       	out	0x3e, r29	; 62
      2b6:	0f be       	out	0x3f, r0	; 63
      2b8:	cd bf       	out	0x3d, r28	; 61
-	port_init();
      2ba:	9c df       	rcall	.-200    	; 0x1f4 <port_init>
-	timer_init();
      2bc:	b9 d3       	rcall	.+1906   	; 0xa30 <timer_init>
-	external_int_init();
      2be:	c0 d3       	rcall	.+1920   	; 0xa40 <external_int_init>
-	uart0_init(BAUD9600);
      2c0:	83 e3       	ldi	r24, 0x33	; 51
      2c2:	90 e0       	ldi	r25, 0x00	; 0
-	lcd_init();
      2c4:	2d d6       	rcall	.+3162   	; 0xf20 <uart0_init>
      2c6:	1c df       	rcall	.-456    	; 0x100 <lcd_init>
-	adc_init();
      2c8:	c1 d3       	rcall	.+1922   	; 0xa4c <adc_init>
      2ca:	6b d4       	rcall	.+2262   	; 0xba2 <twi_init>
-	
-	// TWI initialization
-	twi_init();
      2cc:	78 94       	sei
      2ce:	80 91 a1 01 	lds	r24, 0x01A1	; 0x8001a1 <task_10ms>
-	char string_for_write[50];
-	
-    /* Replace with your application code */
-    while (1) 
-    {
-		if(task_10ms)
      2d2:	88 23       	and	r24, r24
      2d4:	09 f4       	brne	.+2      	; 0x2d8 <main+0x32>
      2d6:	dc c1       	rjmp	.+952    	; 0x690 <__LOCK_REGION_LENGTH__+0x290>
      2d8:	00 99       	sbic	0x00, 0	; 0
      2da:	42 c0       	rjmp	.+132    	; 0x360 <main+0xba>
-		{
-			// Set time and save time -> BUTTON1 logic
-			if((PINA & (1<<PA0)) == 0 && PA0_pushed == FALSE) {
      2dc:	80 91 9e 01 	lds	r24, 0x019E	; 0x80019e <PA0_pushed>
      2e0:	81 11       	cpse	r24, r1
      2e2:	3e c0       	rjmp	.+124    	; 0x360 <main+0xba>
      2e4:	80 91 02 01 	lds	r24, 0x0102	; 0x800102 <curr_edit>
-				if(curr_edit == NOEDIT || curr_edit == TIME) {
      2e8:	82 30       	cpi	r24, 0x02	; 2
      2ea:	11 f0       	breq	.+4      	; 0x2f0 <main+0x4a>
      2ec:	81 11       	cpse	r24, r1
      2ee:	35 c0       	rjmp	.+106    	; 0x35a <main+0xb4>
      2f0:	95 b1       	in	r25, 0x05	; 5
      2f2:	81 e0       	ldi	r24, 0x01	; 1
-					PORTB ^= (1<<PB0);
      2f4:	89 27       	eor	r24, r25
      2f6:	85 b9       	out	0x05, r24	; 5
      2f8:	10 92 02 01 	sts	0x0102, r1	; 0x800102 <curr_edit>
-					curr_edit = TIME;
      2fc:	10 92 90 01 	sts	0x0190, r1	; 0x800190 <__data_end>
-					
-					edited_value = 0;
      300:	85 e0       	ldi	r24, 0x05	; 5
      302:	e3 e0       	ldi	r30, 0x03	; 3
-					sprintf(edited_text, "PERC");
      304:	f1 e0       	ldi	r31, 0x01	; 1
      306:	a4 ea       	ldi	r26, 0xA4	; 164
      308:	b1 e0       	ldi	r27, 0x01	; 1
@@ -549,27 +460,19 @@ int main(void)
      30e:	8a 95       	dec	r24
      310:	e1 f7       	brne	.-8      	; 0x30a <main+0x64>
      312:	80 91 a2 01 	lds	r24, 0x01A2	; 0x8001a2 <timer_cnt>
-					
-					time_0 = timer_cnt;
      316:	90 91 a3 01 	lds	r25, 0x01A3	; 0x8001a3 <timer_cnt+0x1>
      31a:	90 93 99 01 	sts	0x0199, r25	; 0x800199 <time_0+0x1>
      31e:	80 93 98 01 	sts	0x0198, r24	; 0x800198 <time_0>
      322:	80 91 01 01 	lds	r24, 0x0101	; 0x800101 <time_edit_save>
-					
-					if(time_edit_save == SAVE) {
      326:	81 30       	cpi	r24, 0x01	; 1
      328:	19 f4       	brne	.+6      	; 0x330 <main+0x8a>
      32a:	10 92 01 01 	sts	0x0101, r1	; 0x800101 <time_edit_save>
-						time_edit_save = EDIT;
      32e:	15 c0       	rjmp	.+42     	; 0x35a <main+0xb4>
      330:	81 11       	cpse	r24, r1
      332:	13 c0       	rjmp	.+38     	; 0x35a <main+0xb4>
-					} else if(time_edit_save == EDIT) {
      334:	81 e0       	ldi	r24, 0x01	; 1
      336:	80 93 01 01 	sts	0x0101, r24	; 0x800101 <time_edit_save>
-						time_edit_save = SAVE;
      33a:	c0 90 91 01 	lds	r12, 0x0191	; 0x800191 <ev>
-						twi_mt_mode(curr_edit, masodperc, perc, ora, nap, honap, ev);
      33e:	d0 90 92 01 	lds	r13, 0x0192	; 0x800192 <ev+0x1>
      342:	e0 90 93 01 	lds	r14, 0x0193	; 0x800193 <honap>
      346:	00 91 94 01 	lds	r16, 0x0194	; 0x800194 <nap>
@@ -580,45 +483,29 @@ int main(void)
      358:	2d d4       	rcall	.+2138   	; 0xbb4 <twi_mt_mode>
      35a:	81 e0       	ldi	r24, 0x01	; 1
      35c:	80 93 9e 01 	sts	0x019E, r24	; 0x80019e <PA0_pushed>
-					}
-					
-				}
-				
-				PA0_pushed = TRUE;
      360:	00 9b       	sbis	0x00, 0	; 0
      362:	06 c0       	rjmp	.+12     	; 0x370 <main+0xca>
-			}
-			if((PINA & (1<<PA0)) == (1<<PA0) && PA0_pushed == TRUE) PA0_pushed = FALSE;
      364:	80 91 9e 01 	lds	r24, 0x019E	; 0x80019e <PA0_pushed>
      368:	81 30       	cpi	r24, 0x01	; 1
      36a:	11 f4       	brne	.+4      	; 0x370 <main+0xca>
      36c:	10 92 9e 01 	sts	0x019E, r1	; 0x80019e <PA0_pushed>
      370:	04 99       	sbic	0x00, 4	; 0
      372:	41 c0       	rjmp	.+130    	; 0x3f6 <main+0x150>
-			
-			// Set date and save date -> BUTTON5 logic
-			if((PINA & (1<<PA4)) == 0 && PA4_pushed == FALSE) {
      374:	80 91 9a 01 	lds	r24, 0x019A	; 0x80019a <PA4_pushed>
      378:	81 11       	cpse	r24, r1
      37a:	3d c0       	rjmp	.+122    	; 0x3f6 <main+0x150>
      37c:	80 91 02 01 	lds	r24, 0x0102	; 0x800102 <curr_edit>
-				if(curr_edit == NOEDIT || curr_edit == DATE) {
      380:	81 50       	subi	r24, 0x01	; 1
      382:	82 30       	cpi	r24, 0x02	; 2
      384:	a8 f5       	brcc	.+106    	; 0x3f0 <main+0x14a>
      386:	85 b1       	in	r24, 0x05	; 5
      388:	91 e0       	ldi	r25, 0x01	; 1
-					PORTB ^= (1<<PB0);
      38a:	89 27       	eor	r24, r25
      38c:	85 b9       	out	0x05, r24	; 5
      38e:	90 93 02 01 	sts	0x0102, r25	; 0x800102 <curr_edit>
-					curr_edit = DATE;
      392:	10 92 90 01 	sts	0x0190, r1	; 0x800190 <__data_end>
-					
-					edited_value = 0;
      396:	e4 ea       	ldi	r30, 0xA4	; 164
      398:	f1 e0       	ldi	r31, 0x01	; 1
-					sprintf(edited_text, "NAP");
      39a:	8e e4       	ldi	r24, 0x4E	; 78
      39c:	91 e4       	ldi	r25, 0x41	; 65
      39e:	91 83       	std	Z+1, r25	; 0x01
@@ -628,27 +515,19 @@ int main(void)
      3a6:	93 83       	std	Z+3, r25	; 0x03
      3a8:	82 83       	std	Z+2, r24	; 0x02
      3aa:	80 91 a2 01 	lds	r24, 0x01A2	; 0x8001a2 <timer_cnt>
-					
-					time_0 = timer_cnt;
      3ae:	90 91 a3 01 	lds	r25, 0x01A3	; 0x8001a3 <timer_cnt+0x1>
      3b2:	90 93 99 01 	sts	0x0199, r25	; 0x800199 <time_0+0x1>
      3b6:	80 93 98 01 	sts	0x0198, r24	; 0x800198 <time_0>
      3ba:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__DATA_REGION_ORIGIN__>
-					
-					if(date_edit_save == SAVE) {
      3be:	81 30       	cpi	r24, 0x01	; 1
      3c0:	19 f4       	brne	.+6      	; 0x3c8 <main+0x122>
      3c2:	10 92 00 01 	sts	0x0100, r1	; 0x800100 <__DATA_REGION_ORIGIN__>
-						date_edit_save = EDIT;
      3c6:	14 c0       	rjmp	.+40     	; 0x3f0 <main+0x14a>
      3c8:	81 11       	cpse	r24, r1
      3ca:	12 c0       	rjmp	.+36     	; 0x3f0 <main+0x14a>
-					} else if(date_edit_save == EDIT) {
      3cc:	81 e0       	ldi	r24, 0x01	; 1
      3ce:	80 93 00 01 	sts	0x0100, r24	; 0x800100 <__DATA_REGION_ORIGIN__>
-						date_edit_save = SAVE;
      3d2:	c0 90 91 01 	lds	r12, 0x0191	; 0x800191 <ev>
-						twi_mt_mode(curr_edit, masodperc, perc, ora, nap, honap, ev);
      3d6:	d0 90 92 01 	lds	r13, 0x0192	; 0x800192 <ev+0x1>
      3da:	e0 90 93 01 	lds	r14, 0x0193	; 0x800193 <honap>
      3de:	00 91 94 01 	lds	r16, 0x0194	; 0x800194 <nap>
@@ -658,42 +537,28 @@ int main(void)
      3ee:	e2 d3       	rcall	.+1988   	; 0xbb4 <twi_mt_mode>
      3f0:	81 e0       	ldi	r24, 0x01	; 1
      3f2:	80 93 9a 01 	sts	0x019A, r24	; 0x80019a <PA4_pushed>
-					}
-				}
-				
-				PA4_pushed = TRUE;
      3f6:	04 9b       	sbis	0x00, 4	; 0
      3f8:	06 c0       	rjmp	.+12     	; 0x406 <__LOCK_REGION_LENGTH__+0x6>
-			}
-			if((PINA & (1<<PA4)) == (1<<PA4) && PA4_pushed == TRUE) PA4_pushed = FALSE; 
      3fa:	80 91 9a 01 	lds	r24, 0x019A	; 0x80019a <PA4_pushed>
      3fe:	81 30       	cpi	r24, 0x01	; 1
      400:	11 f4       	brne	.+4      	; 0x406 <__LOCK_REGION_LENGTH__+0x6>
      402:	10 92 9a 01 	sts	0x019A, r1	; 0x80019a <PA4_pushed>
      406:	03 99       	sbic	0x00, 3	; 0
      408:	61 c0       	rjmp	.+194    	; 0x4cc <__LOCK_REGION_LENGTH__+0xcc>
-			
-			// change between values that will be edited -> BUTTON4 logic
-			if((PINA & (1<<PA3)) == 0 && PA3_pushed == FALSE) {
      40a:	80 91 9b 01 	lds	r24, 0x019B	; 0x80019b <PA3_pushed>
      40e:	81 11       	cpse	r24, r1
      410:	5d c0       	rjmp	.+186    	; 0x4cc <__LOCK_REGION_LENGTH__+0xcc>
      412:	80 91 02 01 	lds	r24, 0x0102	; 0x800102 <curr_edit>
-				if(curr_edit == TIME) {
      416:	81 11       	cpse	r24, r1
      418:	26 c0       	rjmp	.+76     	; 0x466 <__LOCK_REGION_LENGTH__+0x66>
      41a:	80 91 90 01 	lds	r24, 0x0190	; 0x800190 <__data_end>
-					if(edited_value != 1) edited_value++;
      41e:	81 30       	cpi	r24, 0x01	; 1
      420:	21 f0       	breq	.+8      	; 0x42a <__LOCK_REGION_LENGTH__+0x2a>
      422:	8f 5f       	subi	r24, 0xFF	; 255
      424:	80 93 90 01 	sts	0x0190, r24	; 0x800190 <__data_end>
      428:	02 c0       	rjmp	.+4      	; 0x42e <__LOCK_REGION_LENGTH__+0x2e>
      42a:	10 92 90 01 	sts	0x0190, r1	; 0x800190 <__data_end>
-					else edited_value = 0;
      42e:	80 91 90 01 	lds	r24, 0x0190	; 0x800190 <__data_end>
-					
-					switch(edited_value) {
      432:	88 23       	and	r24, r24
      434:	19 f0       	breq	.+6      	; 0x43c <__LOCK_REGION_LENGTH__+0x3c>
      436:	81 30       	cpi	r24, 0x01	; 1
@@ -701,8 +566,6 @@ int main(void)
      43a:	45 c0       	rjmp	.+138    	; 0x4c6 <__LOCK_REGION_LENGTH__+0xc6>
      43c:	85 e0       	ldi	r24, 0x05	; 5
      43e:	e3 e0       	ldi	r30, 0x03	; 3
-						case 0: {
-							sprintf(edited_text, "PERC");
      440:	f1 e0       	ldi	r31, 0x01	; 1
      442:	a4 ea       	ldi	r26, 0xA4	; 164
      444:	b1 e0       	ldi	r27, 0x01	; 1
@@ -712,11 +575,7 @@ int main(void)
      44c:	e1 f7       	brne	.-8      	; 0x446 <__LOCK_REGION_LENGTH__+0x46>
      44e:	3b c0       	rjmp	.+118    	; 0x4c6 <__LOCK_REGION_LENGTH__+0xc6>
      450:	e4 ea       	ldi	r30, 0xA4	; 164
-							break;
      452:	f1 e0       	ldi	r31, 0x01	; 1
-						}
-						case 1: {
-							sprintf(edited_text, "ORA");
      454:	8f e4       	ldi	r24, 0x4F	; 79
      456:	92 e5       	ldi	r25, 0x52	; 82
      458:	91 83       	std	Z+1, r25	; 0x01
@@ -727,24 +586,15 @@ int main(void)
      462:	82 83       	std	Z+2, r24	; 0x02
      464:	30 c0       	rjmp	.+96     	; 0x4c6 <__LOCK_REGION_LENGTH__+0xc6>
      466:	81 30       	cpi	r24, 0x01	; 1
-							break;
      468:	71 f5       	brne	.+92     	; 0x4c6 <__LOCK_REGION_LENGTH__+0xc6>
-						}
-					}
-					
-				} else if(curr_edit == DATE) {
      46a:	80 91 90 01 	lds	r24, 0x0190	; 0x800190 <__data_end>
-					if(edited_value != 2) edited_value++;
      46e:	82 30       	cpi	r24, 0x02	; 2
      470:	21 f0       	breq	.+8      	; 0x47a <__LOCK_REGION_LENGTH__+0x7a>
      472:	8f 5f       	subi	r24, 0xFF	; 255
      474:	80 93 90 01 	sts	0x0190, r24	; 0x800190 <__data_end>
      478:	02 c0       	rjmp	.+4      	; 0x47e <__LOCK_REGION_LENGTH__+0x7e>
      47a:	10 92 90 01 	sts	0x0190, r1	; 0x800190 <__data_end>
-					else edited_value = 0;
      47e:	80 91 90 01 	lds	r24, 0x0190	; 0x800190 <__data_end>
-					
-					switch(edited_value) {
      482:	81 30       	cpi	r24, 0x01	; 1
      484:	79 f0       	breq	.+30     	; 0x4a4 <__LOCK_REGION_LENGTH__+0xa4>
      486:	18 f0       	brcs	.+6      	; 0x48e <__LOCK_REGION_LENGTH__+0x8e>
@@ -753,8 +603,6 @@ int main(void)
      48c:	1c c0       	rjmp	.+56     	; 0x4c6 <__LOCK_REGION_LENGTH__+0xc6>
      48e:	e4 ea       	ldi	r30, 0xA4	; 164
      490:	f1 e0       	ldi	r31, 0x01	; 1
-						case 0: {
-							sprintf(edited_text, "NAP");
      492:	8e e4       	ldi	r24, 0x4E	; 78
      494:	91 e4       	ldi	r25, 0x41	; 65
      496:	91 83       	std	Z+1, r25	; 0x01
@@ -765,11 +613,7 @@ int main(void)
      4a0:	82 83       	std	Z+2, r24	; 0x02
      4a2:	11 c0       	rjmp	.+34     	; 0x4c6 <__LOCK_REGION_LENGTH__+0xc6>
      4a4:	86 e0       	ldi	r24, 0x06	; 6
-							break;
      4a6:	e9 e8       	ldi	r30, 0x89	; 137
-						}
-						case 1: {
-							sprintf(edited_text, "HONAP");
      4a8:	f1 e0       	ldi	r31, 0x01	; 1
      4aa:	a4 ea       	ldi	r26, 0xA4	; 164
      4ac:	b1 e0       	ldi	r27, 0x01	; 1
@@ -779,11 +623,7 @@ int main(void)
      4b4:	e1 f7       	brne	.-8      	; 0x4ae <__LOCK_REGION_LENGTH__+0xae>
      4b6:	07 c0       	rjmp	.+14     	; 0x4c6 <__LOCK_REGION_LENGTH__+0xc6>
      4b8:	e4 ea       	ldi	r30, 0xA4	; 164
-							break;
      4ba:	f1 e0       	ldi	r31, 0x01	; 1
-						}
-						case 2: {
-							sprintf(edited_text, "EV");
      4bc:	85 e4       	ldi	r24, 0x45	; 69
      4be:	96 e5       	ldi	r25, 0x56	; 86
      4c0:	91 83       	std	Z+1, r25	; 0x01
@@ -791,71 +631,45 @@ int main(void)
      4c4:	12 82       	std	Z+2, r1	; 0x02
      4c6:	81 e0       	ldi	r24, 0x01	; 1
      4c8:	80 93 9b 01 	sts	0x019B, r24	; 0x80019b <PA3_pushed>
-							break;
-						}
-					}
-				}
-				
-				PA3_pushed = TRUE;
      4cc:	03 9b       	sbis	0x00, 3	; 0
      4ce:	06 c0       	rjmp	.+12     	; 0x4dc <__LOCK_REGION_LENGTH__+0xdc>
-			}
-			if((PINA & (1<<PA3)) == (1<<PA3) && PA3_pushed == TRUE) PA3_pushed = FALSE;
      4d0:	80 91 9b 01 	lds	r24, 0x019B	; 0x80019b <PA3_pushed>
      4d4:	81 30       	cpi	r24, 0x01	; 1
      4d6:	11 f4       	brne	.+4      	; 0x4dc <__LOCK_REGION_LENGTH__+0xdc>
      4d8:	10 92 9b 01 	sts	0x019B, r1	; 0x80019b <PA3_pushed>
      4dc:	01 99       	sbic	0x00, 1	; 0
      4de:	5e c0       	rjmp	.+188    	; 0x59c <__LOCK_REGION_LENGTH__+0x19c>
-			
-			// increase the actual value of the edited value -> BUTTON2 logic
-			if((PINA & (1<<PA1)) == 0 && PA1_pushed == FALSE) {
      4e0:	80 91 9d 01 	lds	r24, 0x019D	; 0x80019d <PA1_pushed>
      4e4:	81 11       	cpse	r24, r1
      4e6:	5a c0       	rjmp	.+180    	; 0x59c <__LOCK_REGION_LENGTH__+0x19c>
      4e8:	80 91 02 01 	lds	r24, 0x0102	; 0x800102 <curr_edit>
-				if(curr_edit == TIME) {
      4ec:	81 11       	cpse	r24, r1
      4ee:	1d c0       	rjmp	.+58     	; 0x52a <__LOCK_REGION_LENGTH__+0x12a>
      4f0:	80 91 90 01 	lds	r24, 0x0190	; 0x800190 <__data_end>
-					switch(edited_value) {
      4f4:	88 23       	and	r24, r24
      4f6:	19 f0       	breq	.+6      	; 0x4fe <__LOCK_REGION_LENGTH__+0xfe>
      4f8:	81 30       	cpi	r24, 0x01	; 1
      4fa:	61 f0       	breq	.+24     	; 0x514 <__LOCK_REGION_LENGTH__+0x114>
      4fc:	4c c0       	rjmp	.+152    	; 0x596 <__LOCK_REGION_LENGTH__+0x196>
      4fe:	80 91 96 01 	lds	r24, 0x0196	; 0x800196 <perc>
-						case 0: {
-							if(perc != 59) perc++;
      502:	8b 33       	cpi	r24, 0x3B	; 59
      504:	21 f0       	breq	.+8      	; 0x50e <__LOCK_REGION_LENGTH__+0x10e>
      506:	8f 5f       	subi	r24, 0xFF	; 255
      508:	80 93 96 01 	sts	0x0196, r24	; 0x800196 <perc>
      50c:	44 c0       	rjmp	.+136    	; 0x596 <__LOCK_REGION_LENGTH__+0x196>
      50e:	10 92 96 01 	sts	0x0196, r1	; 0x800196 <perc>
-							else perc = 0;
      512:	41 c0       	rjmp	.+130    	; 0x596 <__LOCK_REGION_LENGTH__+0x196>
      514:	80 91 95 01 	lds	r24, 0x0195	; 0x800195 <ora>
-							break;
-						}
-						case 1: {
-							if(ora != 23) ora++;
      518:	87 31       	cpi	r24, 0x17	; 23
      51a:	21 f0       	breq	.+8      	; 0x524 <__LOCK_REGION_LENGTH__+0x124>
      51c:	8f 5f       	subi	r24, 0xFF	; 255
      51e:	80 93 95 01 	sts	0x0195, r24	; 0x800195 <ora>
      522:	39 c0       	rjmp	.+114    	; 0x596 <__LOCK_REGION_LENGTH__+0x196>
      524:	10 92 95 01 	sts	0x0195, r1	; 0x800195 <ora>
-							else ora = 0;
      528:	36 c0       	rjmp	.+108    	; 0x596 <__LOCK_REGION_LENGTH__+0x196>
      52a:	81 30       	cpi	r24, 0x01	; 1
      52c:	a1 f5       	brne	.+104    	; 0x596 <__LOCK_REGION_LENGTH__+0x196>
-							break;
-						}
-					}
-				} else if(curr_edit == DATE) {
      52e:	80 91 90 01 	lds	r24, 0x0190	; 0x800190 <__data_end>
-					switch(edited_value) {
      532:	81 30       	cpi	r24, 0x01	; 1
      534:	b9 f0       	breq	.+46     	; 0x564 <__LOCK_REGION_LENGTH__+0x164>
      536:	18 f0       	brcs	.+6      	; 0x53e <__LOCK_REGION_LENGTH__+0x13e>
@@ -863,8 +677,6 @@ int main(void)
      53a:	01 f1       	breq	.+64     	; 0x57c <__LOCK_REGION_LENGTH__+0x17c>
      53c:	2c c0       	rjmp	.+88     	; 0x596 <__LOCK_REGION_LENGTH__+0x196>
      53e:	60 91 91 01 	lds	r22, 0x0191	; 0x800191 <ev>
-						case 0: {
-							if(nap != calc_month_length(honap, ev)) nap++;
      542:	70 91 92 01 	lds	r23, 0x0192	; 0x800192 <ev+0x1>
      546:	80 91 93 01 	lds	r24, 0x0193	; 0x800193 <honap>
      54a:	64 de       	rcall	.-824    	; 0x214 <calc_month_length>
@@ -876,13 +688,8 @@ int main(void)
      55a:	1d c0       	rjmp	.+58     	; 0x596 <__LOCK_REGION_LENGTH__+0x196>
      55c:	81 e0       	ldi	r24, 0x01	; 1
      55e:	80 93 94 01 	sts	0x0194, r24	; 0x800194 <nap>
-							else nap = 1;
      562:	19 c0       	rjmp	.+50     	; 0x596 <__LOCK_REGION_LENGTH__+0x196>
      564:	80 91 93 01 	lds	r24, 0x0193	; 0x800193 <honap>
-							break;
-						}
-						case 1: {
-							if(honap != 12) honap++;
      568:	8c 30       	cpi	r24, 0x0C	; 12
      56a:	21 f0       	breq	.+8      	; 0x574 <__LOCK_REGION_LENGTH__+0x174>
      56c:	8f 5f       	subi	r24, 0xFF	; 255
@@ -890,13 +697,8 @@ int main(void)
      572:	11 c0       	rjmp	.+34     	; 0x596 <__LOCK_REGION_LENGTH__+0x196>
      574:	81 e0       	ldi	r24, 0x01	; 1
      576:	80 93 93 01 	sts	0x0193, r24	; 0x800193 <honap>
-							else honap = 1;
      57a:	0d c0       	rjmp	.+26     	; 0x596 <__LOCK_REGION_LENGTH__+0x196>
      57c:	80 91 91 01 	lds	r24, 0x0191	; 0x800191 <ev>
-							break;
-						}
-						case 2: {
-							if(ev != 2099) ev++;
      580:	90 91 92 01 	lds	r25, 0x0192	; 0x800192 <ev+0x1>
      584:	83 33       	cpi	r24, 0x33	; 51
      586:	28 e0       	ldi	r18, 0x08	; 8
@@ -907,42 +709,27 @@ int main(void)
      592:	80 93 91 01 	sts	0x0191, r24	; 0x800191 <ev>
      596:	81 e0       	ldi	r24, 0x01	; 1
      598:	80 93 9d 01 	sts	0x019D, r24	; 0x80019d <PA1_pushed>
-							break;
-						}
-					}
-				}
-				
-				PA1_pushed = TRUE;
      59c:	01 9b       	sbis	0x00, 1	; 0
      59e:	06 c0       	rjmp	.+12     	; 0x5ac <__LOCK_REGION_LENGTH__+0x1ac>
-			}
-			if((PINA & (1<<PA1)) == (1<<PA1) && PA1_pushed == TRUE) PA1_pushed = FALSE;
      5a0:	80 91 9d 01 	lds	r24, 0x019D	; 0x80019d <PA1_pushed>
      5a4:	81 30       	cpi	r24, 0x01	; 1
      5a6:	11 f4       	brne	.+4      	; 0x5ac <__LOCK_REGION_LENGTH__+0x1ac>
      5a8:	10 92 9d 01 	sts	0x019D, r1	; 0x80019d <PA1_pushed>
      5ac:	02 99       	sbic	0x00, 2	; 0
      5ae:	66 c0       	rjmp	.+204    	; 0x67c <__LOCK_REGION_LENGTH__+0x27c>
-			
-			// decrease the actual value of the edited value -> BUTTON3 logic
-			if((PINA & (1<<PA2)) == 0 && PA2_pushed == FALSE) {
      5b0:	80 91 9c 01 	lds	r24, 0x019C	; 0x80019c <PA2_pushed>
      5b4:	81 11       	cpse	r24, r1
      5b6:	62 c0       	rjmp	.+196    	; 0x67c <__LOCK_REGION_LENGTH__+0x27c>
      5b8:	80 91 02 01 	lds	r24, 0x0102	; 0x800102 <curr_edit>
-				if(curr_edit == TIME) {
      5bc:	81 11       	cpse	r24, r1
      5be:	1f c0       	rjmp	.+62     	; 0x5fe <__LOCK_REGION_LENGTH__+0x1fe>
      5c0:	80 91 90 01 	lds	r24, 0x0190	; 0x800190 <__data_end>
-					switch(edited_value) {
      5c4:	88 23       	and	r24, r24
      5c6:	19 f0       	breq	.+6      	; 0x5ce <__LOCK_REGION_LENGTH__+0x1ce>
      5c8:	81 30       	cpi	r24, 0x01	; 1
      5ca:	69 f0       	breq	.+26     	; 0x5e6 <__LOCK_REGION_LENGTH__+0x1e6>
      5cc:	54 c0       	rjmp	.+168    	; 0x676 <__LOCK_REGION_LENGTH__+0x276>
      5ce:	80 91 96 01 	lds	r24, 0x0196	; 0x800196 <perc>
-						case 0: {
-							if(perc != 0) perc--;
      5d2:	88 23       	and	r24, r24
      5d4:	21 f0       	breq	.+8      	; 0x5de <__LOCK_REGION_LENGTH__+0x1de>
      5d6:	81 50       	subi	r24, 0x01	; 1
@@ -950,13 +737,8 @@ int main(void)
      5dc:	4c c0       	rjmp	.+152    	; 0x676 <__LOCK_REGION_LENGTH__+0x276>
      5de:	8b e3       	ldi	r24, 0x3B	; 59
      5e0:	80 93 96 01 	sts	0x0196, r24	; 0x800196 <perc>
-							else perc = 59;
      5e4:	48 c0       	rjmp	.+144    	; 0x676 <__LOCK_REGION_LENGTH__+0x276>
      5e6:	80 91 95 01 	lds	r24, 0x0195	; 0x800195 <ora>
-							break;
-						}
-						case 1: {
-							if(ora != 0) ora--;
      5ea:	88 23       	and	r24, r24
      5ec:	21 f0       	breq	.+8      	; 0x5f6 <__LOCK_REGION_LENGTH__+0x1f6>
      5ee:	81 50       	subi	r24, 0x01	; 1
@@ -964,16 +746,10 @@ int main(void)
      5f4:	40 c0       	rjmp	.+128    	; 0x676 <__LOCK_REGION_LENGTH__+0x276>
      5f6:	87 e1       	ldi	r24, 0x17	; 23
      5f8:	80 93 95 01 	sts	0x0195, r24	; 0x800195 <ora>
-							else ora = 23;
      5fc:	3c c0       	rjmp	.+120    	; 0x676 <__LOCK_REGION_LENGTH__+0x276>
      5fe:	81 30       	cpi	r24, 0x01	; 1
      600:	d1 f5       	brne	.+116    	; 0x676 <__LOCK_REGION_LENGTH__+0x276>
-							break;
-						}
-					}
-					} else if(curr_edit == DATE) {
      602:	80 91 90 01 	lds	r24, 0x0190	; 0x800190 <__data_end>
-					switch(edited_value) {
      606:	81 30       	cpi	r24, 0x01	; 1
      608:	b1 f0       	breq	.+44     	; 0x636 <__LOCK_REGION_LENGTH__+0x236>
      60a:	18 f0       	brcs	.+6      	; 0x612 <__LOCK_REGION_LENGTH__+0x212>
@@ -981,25 +757,18 @@ int main(void)
      60e:	f9 f0       	breq	.+62     	; 0x64e <__LOCK_REGION_LENGTH__+0x24e>
      610:	32 c0       	rjmp	.+100    	; 0x676 <__LOCK_REGION_LENGTH__+0x276>
      612:	80 91 94 01 	lds	r24, 0x0194	; 0x800194 <nap>
-						case 0: {
-							if(nap != 1) nap--;
      616:	81 30       	cpi	r24, 0x01	; 1
      618:	21 f0       	breq	.+8      	; 0x622 <__LOCK_REGION_LENGTH__+0x222>
      61a:	81 50       	subi	r24, 0x01	; 1
      61c:	80 93 94 01 	sts	0x0194, r24	; 0x800194 <nap>
      620:	2a c0       	rjmp	.+84     	; 0x676 <__LOCK_REGION_LENGTH__+0x276>
      622:	60 91 91 01 	lds	r22, 0x0191	; 0x800191 <ev>
-							else nap = calc_month_length(honap, ev);
      626:	70 91 92 01 	lds	r23, 0x0192	; 0x800192 <ev+0x1>
      62a:	80 91 93 01 	lds	r24, 0x0193	; 0x800193 <honap>
      62e:	f2 dd       	rcall	.-1052   	; 0x214 <calc_month_length>
      630:	80 93 94 01 	sts	0x0194, r24	; 0x800194 <nap>
      634:	20 c0       	rjmp	.+64     	; 0x676 <__LOCK_REGION_LENGTH__+0x276>
      636:	80 91 93 01 	lds	r24, 0x0193	; 0x800193 <honap>
-							break;
-						}
-						case 1: {
-							if(honap != 1) honap--;
      63a:	81 30       	cpi	r24, 0x01	; 1
      63c:	21 f0       	breq	.+8      	; 0x646 <__LOCK_REGION_LENGTH__+0x246>
      63e:	81 50       	subi	r24, 0x01	; 1
@@ -1007,13 +776,8 @@ int main(void)
      644:	18 c0       	rjmp	.+48     	; 0x676 <__LOCK_REGION_LENGTH__+0x276>
      646:	8c e0       	ldi	r24, 0x0C	; 12
      648:	80 93 93 01 	sts	0x0193, r24	; 0x800193 <honap>
-							else honap = 12;
      64c:	14 c0       	rjmp	.+40     	; 0x676 <__LOCK_REGION_LENGTH__+0x276>
      64e:	80 91 91 01 	lds	r24, 0x0191	; 0x800191 <ev>
-							break;
-						}
-						case 2: {
-							if(ev != 2000) ev--;
      652:	90 91 92 01 	lds	r25, 0x0192	; 0x800192 <ev+0x1>
      656:	80 3d       	cpi	r24, 0xD0	; 208
      658:	27 e0       	ldi	r18, 0x07	; 7
@@ -1025,42 +789,25 @@ int main(void)
      668:	06 c0       	rjmp	.+12     	; 0x676 <__LOCK_REGION_LENGTH__+0x276>
      66a:	83 e3       	ldi	r24, 0x33	; 51
      66c:	98 e0       	ldi	r25, 0x08	; 8
-							else ev = 2099;
      66e:	90 93 92 01 	sts	0x0192, r25	; 0x800192 <ev+0x1>
      672:	80 93 91 01 	sts	0x0191, r24	; 0x800191 <ev>
      676:	81 e0       	ldi	r24, 0x01	; 1
      678:	80 93 9c 01 	sts	0x019C, r24	; 0x80019c <PA2_pushed>
-							break;
-						}
-					}
-				}
-				
-				PA2_pushed = TRUE;
      67c:	02 9b       	sbis	0x00, 2	; 0
      67e:	06 c0       	rjmp	.+12     	; 0x68c <__LOCK_REGION_LENGTH__+0x28c>
-			}
-			if((PINA & (1<<PA2)) == (1<<PA2) && PA2_pushed == TRUE) PA2_pushed = FALSE;
      680:	80 91 9c 01 	lds	r24, 0x019C	; 0x80019c <PA2_pushed>
      684:	81 30       	cpi	r24, 0x01	; 1
      686:	11 f4       	brne	.+4      	; 0x68c <__LOCK_REGION_LENGTH__+0x28c>
      688:	10 92 9c 01 	sts	0x019C, r1	; 0x80019c <PA2_pushed>
      68c:	10 92 a1 01 	sts	0x01A1, r1	; 0x8001a1 <task_10ms>
-			
-			
-			task_10ms=FALSE;
      690:	80 91 a0 01 	lds	r24, 0x01A0	; 0x8001a0 <task_100ms>
-		}
-		if(task_100ms)
      694:	88 23       	and	r24, r24
      696:	09 f4       	brne	.+2      	; 0x69a <__LOCK_REGION_LENGTH__+0x29a>
      698:	2a c1       	rjmp	.+596    	; 0x8ee <__LOCK_REGION_LENGTH__+0x4ee>
      69a:	80 91 02 01 	lds	r24, 0x0102	; 0x800102 <curr_edit>
-		{
-			if(curr_edit == TIME) {
      69e:	81 11       	cpse	r24, r1
      6a0:	74 c0       	rjmp	.+232    	; 0x78a <__LOCK_REGION_LENGTH__+0x38a>
      6a2:	80 91 a2 01 	lds	r24, 0x01A2	; 0x8001a2 <timer_cnt>
-				if(timer_cnt - time_0 < 100) {
      6a6:	90 91 a3 01 	lds	r25, 0x01A3	; 0x8001a3 <timer_cnt+0x1>
      6aa:	20 91 98 01 	lds	r18, 0x0198	; 0x800198 <time_0>
      6ae:	30 91 99 01 	lds	r19, 0x0199	; 0x800199 <time_0+0x1>
@@ -1070,7 +817,6 @@ int main(void)
      6b8:	91 05       	cpc	r25, r1
      6ba:	d0 f4       	brcc	.+52     	; 0x6f0 <__LOCK_REGION_LENGTH__+0x2f0>
      6bc:	80 91 01 01 	lds	r24, 0x0101	; 0x800101 <time_edit_save>
-					if(time_edit_save == EDIT) sprintf(string_for_write, "IDO SZERKESZTESE");
      6c0:	81 11       	cpse	r24, r1
      6c2:	09 c0       	rjmp	.+18     	; 0x6d6 <__LOCK_REGION_LENGTH__+0x2d6>
      6c4:	91 e1       	ldi	r25, 0x11	; 17
@@ -1084,7 +830,6 @@ int main(void)
      6d4:	e1 f7       	brne	.-8      	; 0x6ce <__LOCK_REGION_LENGTH__+0x2ce>
      6d6:	81 30       	cpi	r24, 0x01	; 1
      6d8:	09 f0       	breq	.+2      	; 0x6dc <__LOCK_REGION_LENGTH__+0x2dc>
-					if(time_edit_save == SAVE) sprintf(string_for_write, "IDO ELMENTVE    ");
      6da:	57 c0       	rjmp	.+174    	; 0x78a <__LOCK_REGION_LENGTH__+0x38a>
      6dc:	81 e1       	ldi	r24, 0x11	; 17
      6de:	e9 e1       	ldi	r30, 0x19	; 25
@@ -1097,8 +842,6 @@ int main(void)
      6ec:	e1 f7       	brne	.-8      	; 0x6e6 <__LOCK_REGION_LENGTH__+0x2e6>
      6ee:	4d c0       	rjmp	.+154    	; 0x78a <__LOCK_REGION_LENGTH__+0x38a>
      6f0:	80 91 01 01 	lds	r24, 0x0101	; 0x800101 <time_edit_save>
-				} else {
-					if(time_edit_save == EDIT) sprintf(string_for_write, "%02d:%02d %10s", ora, perc, edited_text);
      6f4:	81 11       	cpse	r24, r1
      6f6:	1a c0       	rjmp	.+52     	; 0x72c <__LOCK_REGION_LENGTH__+0x32c>
      6f8:	84 ea       	ldi	r24, 0xA4	; 164
@@ -1126,12 +869,9 @@ int main(void)
      728:	0f be       	out	0x3f, r0	; 63
      72a:	cd bf       	out	0x3d, r28	; 61
      72c:	80 91 01 01 	lds	r24, 0x0101	; 0x800101 <time_edit_save>
-					if(time_edit_save == SAVE) {
      730:	81 30       	cpi	r24, 0x01	; 1
      732:	59 f5       	brne	.+86     	; 0x78a <__LOCK_REGION_LENGTH__+0x38a>
      734:	80 91 97 01 	lds	r24, 0x0197	; 0x800197 <masodperc>
-						//sprintf(string_for_write, "%04d%02d%02d %02d%02d %02d", ev, honap, nap, ora, perc, homerseklet);
-						sprintf(string_for_write, "%04d%02d%02d %02d%02d %02d", ev, honap, nap, ora, perc, masodperc);
      738:	1f 92       	push	r1
      73a:	8f 93       	push	r24
      73c:	80 91 96 01 	lds	r24, 0x0196	; 0x800196 <perc>
@@ -1161,23 +901,16 @@ int main(void)
      778:	f7 d5       	rcall	.+3054   	; 0x1368 <sprintf>
      77a:	82 e0       	ldi	r24, 0x02	; 2
      77c:	80 93 02 01 	sts	0x0102, r24	; 0x800102 <curr_edit>
-						curr_edit = NOEDIT;
      780:	0f b6       	in	r0, 0x3f	; 63
      782:	f8 94       	cli
      784:	de bf       	out	0x3e, r29	; 62
      786:	0f be       	out	0x3f, r0	; 63
      788:	cd bf       	out	0x3d, r28	; 61
      78a:	80 91 02 01 	lds	r24, 0x0102	; 0x800102 <curr_edit>
-					}
-				}
-			}
-			
-			if(curr_edit == DATE) {
      78e:	81 30       	cpi	r24, 0x01	; 1
      790:	09 f0       	breq	.+2      	; 0x794 <__LOCK_REGION_LENGTH__+0x394>
      792:	7a c0       	rjmp	.+244    	; 0x888 <__LOCK_REGION_LENGTH__+0x488>
      794:	80 91 a2 01 	lds	r24, 0x01A2	; 0x8001a2 <timer_cnt>
-				if(timer_cnt - time_0 < 100) {
      798:	90 91 a3 01 	lds	r25, 0x01A3	; 0x8001a3 <timer_cnt+0x1>
      79c:	20 91 98 01 	lds	r18, 0x0198	; 0x800198 <time_0>
      7a0:	30 91 99 01 	lds	r19, 0x0199	; 0x800199 <time_0+0x1>
@@ -1187,7 +920,6 @@ int main(void)
      7aa:	91 05       	cpc	r25, r1
      7ac:	d0 f4       	brcc	.+52     	; 0x7e2 <__LOCK_REGION_LENGTH__+0x3e2>
      7ae:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__DATA_REGION_ORIGIN__>
-					if(date_edit_save == EDIT) sprintf(string_for_write, "DATUM SZERK.    ");
      7b2:	81 11       	cpse	r24, r1
      7b4:	09 c0       	rjmp	.+18     	; 0x7c8 <__LOCK_REGION_LENGTH__+0x3c8>
      7b6:	91 e1       	ldi	r25, 0x11	; 17
@@ -1201,7 +933,6 @@ int main(void)
      7c6:	e1 f7       	brne	.-8      	; 0x7c0 <__LOCK_REGION_LENGTH__+0x3c0>
      7c8:	81 30       	cpi	r24, 0x01	; 1
      7ca:	09 f0       	breq	.+2      	; 0x7ce <__LOCK_REGION_LENGTH__+0x3ce>
-					if(date_edit_save == SAVE) sprintf(string_for_write, "DATUM ELMENTVE  ");
      7cc:	5d c0       	rjmp	.+186    	; 0x888 <__LOCK_REGION_LENGTH__+0x488>
      7ce:	81 e1       	ldi	r24, 0x11	; 17
      7d0:	e5 e6       	ldi	r30, 0x65	; 101
@@ -1214,8 +945,6 @@ int main(void)
      7de:	e1 f7       	brne	.-8      	; 0x7d8 <__LOCK_REGION_LENGTH__+0x3d8>
      7e0:	53 c0       	rjmp	.+166    	; 0x888 <__LOCK_REGION_LENGTH__+0x488>
      7e2:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__DATA_REGION_ORIGIN__>
-				} else {
-					if(date_edit_save == EDIT) sprintf(string_for_write, "%04d-%02d-%02d %5s", ev, honap, nap, edited_text);
      7e6:	81 11       	cpse	r24, r1
      7e8:	20 c0       	rjmp	.+64     	; 0x82a <__LOCK_REGION_LENGTH__+0x42a>
      7ea:	84 ea       	ldi	r24, 0xA4	; 164
@@ -1247,12 +976,9 @@ int main(void)
      826:	0f be       	out	0x3f, r0	; 63
      828:	cd bf       	out	0x3d, r28	; 61
      82a:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__DATA_REGION_ORIGIN__>
-					if(date_edit_save == SAVE) {
      82e:	81 30       	cpi	r24, 0x01	; 1
      830:	59 f5       	brne	.+86     	; 0x888 <__LOCK_REGION_LENGTH__+0x488>
      832:	80 91 97 01 	lds	r24, 0x0197	; 0x800197 <masodperc>
-						// sprintf(string_for_write, "%04d%02d%02d %02d%02d %02d", ev, honap, nap, ora, perc, homerseklet);
-						sprintf(string_for_write, "%04d%02d%02d %02d%02d %02d", ev, honap, nap, ora, perc, masodperc);
      836:	1f 92       	push	r1
      838:	8f 93       	push	r24
      83a:	80 91 96 01 	lds	r24, 0x0196	; 0x800196 <perc>
@@ -1282,23 +1008,15 @@ int main(void)
      876:	78 d5       	rcall	.+2800   	; 0x1368 <sprintf>
      878:	82 e0       	ldi	r24, 0x02	; 2
      87a:	80 93 02 01 	sts	0x0102, r24	; 0x800102 <curr_edit>
-						curr_edit = NOEDIT;
      87e:	0f b6       	in	r0, 0x3f	; 63
      880:	f8 94       	cli
      882:	de bf       	out	0x3e, r29	; 62
      884:	0f be       	out	0x3f, r0	; 63
      886:	cd bf       	out	0x3d, r28	; 61
      888:	80 91 02 01 	lds	r24, 0x0102	; 0x800102 <curr_edit>
-					}
-				}
-			}
-			
-			if(curr_edit == NOEDIT) {
      88c:	82 30       	cpi	r24, 0x02	; 2
      88e:	41 f5       	brne	.+80     	; 0x8e0 <__LOCK_REGION_LENGTH__+0x4e0>
      890:	80 91 97 01 	lds	r24, 0x0197	; 0x800197 <masodperc>
-				// sprintf(string_for_write, "%04d%02d%02d %02d%02d %02d", ev, honap, nap, ora, perc, homerseklet);
-				sprintf(string_for_write, "%04d%02d%02d %02d%02d %02d", ev, honap, nap, ora, perc, masodperc);
      894:	1f 92       	push	r1
      896:	8f 93       	push	r24
      898:	80 91 96 01 	lds	r24, 0x0196	; 0x800196 <perc>
@@ -1331,32 +1049,20 @@ int main(void)
      8da:	de bf       	out	0x3e, r29	; 62
      8dc:	0f be       	out	0x3f, r0	; 63
      8de:	cd bf       	out	0x3d, r28	; 61
-			}
-			
-			lcd_set_cursor_position(0);
      8e0:	80 e0       	ldi	r24, 0x00	; 0
      8e2:	67 dc       	rcall	.-1842   	; 0x1b2 <lcd_set_cursor_position>
      8e4:	ce 01       	movw	r24, r28
-			lcd_write_string(string_for_write);
      8e6:	01 96       	adiw	r24, 0x01	; 1
      8e8:	79 dc       	rcall	.-1806   	; 0x1dc <lcd_write_string>
      8ea:	10 92 a0 01 	sts	0x01A0, r1	; 0x8001a0 <task_100ms>
-			
-			
-			task_100ms=FALSE;
      8ee:	80 91 9f 01 	lds	r24, 0x019F	; 0x80019f <task_500ms>
-		}
-		if(task_500ms)
      8f2:	88 23       	and	r24, r24
      8f4:	09 f4       	brne	.+2      	; 0x8f8 <__LOCK_REGION_LENGTH__+0x4f8>
      8f6:	eb cc       	rjmp	.-1578   	; 0x2ce <main+0x28>
      8f8:	80 91 02 01 	lds	r24, 0x0102	; 0x800102 <curr_edit>
-		{
-			if(curr_edit == NOEDIT) {
      8fc:	82 30       	cpi	r24, 0x02	; 2
      8fe:	89 f4       	brne	.+34     	; 0x922 <__LOCK_REGION_LENGTH__+0x522>
      900:	0f 2e       	mov	r0, r31
-				twi_mr_mode(&masodperc, &perc, &ora, &nap, &honap, &ev);	
      902:	f1 e9       	ldi	r31, 0x91	; 145
      904:	ef 2e       	mov	r14, r31
      906:	f1 e0       	ldi	r31, 0x01	; 1
@@ -1374,19 +1080,11 @@ int main(void)
      91e:	91 e0       	ldi	r25, 0x01	; 1
      920:	0b d2       	rcall	.+1046   	; 0xd38 <twi_mr_mode>
      922:	10 92 9f 01 	sts	0x019F, r1	; 0x80019f <task_500ms>
-			}
-			task_500ms=FALSE;
      926:	d3 cc       	rjmp	.-1626   	; 0x2ce <main+0x28>
 
 00000928 <__vector_16>:
      928:	1f 92       	push	r1
      92a:	0f 92       	push	r0
-
-/******************************************************************************
-* Interrupt Routines
-******************************************************************************/
-ISR(TIMER0_COMP_vect) //timer CTC interrupt
-{
      92c:	0f b6       	in	r0, 0x3f	; 63
      92e:	0f 92       	push	r0
      930:	11 24       	eor	r1, r1
@@ -1400,17 +1098,14 @@ ISR(TIMER0_COMP_vect) //timer CTC interrupt
      940:	9f 93       	push	r25
      942:	af 93       	push	r26
      944:	bf 93       	push	r27
-	timer_cnt++;
      946:	40 91 a2 01 	lds	r20, 0x01A2	; 0x8001a2 <timer_cnt>
      94a:	50 91 a3 01 	lds	r21, 0x01A3	; 0x8001a3 <timer_cnt+0x1>
      94e:	4f 5f       	subi	r20, 0xFF	; 255
      950:	5f 4f       	sbci	r21, 0xFF	; 255
      952:	50 93 a3 01 	sts	0x01A3, r21	; 0x8001a3 <timer_cnt+0x1>
      956:	40 93 a2 01 	sts	0x01A2, r20	; 0x8001a2 <timer_cnt>
-	if(timer_cnt % 1 == 0) task_10ms = TRUE;
      95a:	81 e0       	ldi	r24, 0x01	; 1
      95c:	80 93 a1 01 	sts	0x01A1, r24	; 0x8001a1 <task_10ms>
-	if(timer_cnt % 10 == 0) task_100ms = TRUE;
      960:	9a 01       	movw	r18, r20
      962:	ad ec       	ldi	r26, 0xCD	; 205
      964:	bc ec       	ldi	r27, 0xCC	; 204
@@ -1437,7 +1132,6 @@ ISR(TIMER0_COMP_vect) //timer CTC interrupt
      98e:	19 f4       	brne	.+6      	; 0x996 <__vector_16+0x6e>
      990:	81 e0       	ldi	r24, 0x01	; 1
      992:	80 93 a0 01 	sts	0x01A0, r24	; 0x8001a0 <task_100ms>
-	if(timer_cnt % 50 == 0) task_500ms =TRUE;
      996:	9a 01       	movw	r18, r20
      998:	36 95       	lsr	r19
      99a:	27 95       	ror	r18
@@ -1457,7 +1151,6 @@ ISR(TIMER0_COMP_vect) //timer CTC interrupt
      9b6:	19 f4       	brne	.+6      	; 0x9be <__vector_16+0x96>
      9b8:	81 e0       	ldi	r24, 0x01	; 1
      9ba:	80 93 9f 01 	sts	0x019F, r24	; 0x80019f <task_500ms>
-}
      9be:	bf 91       	pop	r27
      9c0:	af 91       	pop	r26
      9c2:	9f 91       	pop	r25
@@ -1475,16 +1168,11 @@ ISR(TIMER0_COMP_vect) //timer CTC interrupt
      9da:	18 95       	reti
 
 000009dc <__vector_1>:
-
-ISR(INT0_vect) //extint 0 interrput
-{
      9dc:	1f 92       	push	r1
      9de:	0f 92       	push	r0
      9e0:	0f b6       	in	r0, 0x3f	; 63
      9e2:	0f 92       	push	r0
      9e4:	11 24       	eor	r1, r1
-
-}
      9e6:	0f 90       	pop	r0
      9e8:	0f be       	out	0x3f, r0	; 63
      9ea:	0f 90       	pop	r0
@@ -1492,17 +1180,11 @@ ISR(INT0_vect) //extint 0 interrput
      9ee:	18 95       	reti
 
 000009f0 <__vector_21>:
-
-ISR(USART0_RX_vect)
-{
      9f0:	1f 92       	push	r1
      9f2:	0f 92       	push	r0
      9f4:	0f b6       	in	r0, 0x3f	; 63
      9f6:	0f 92       	push	r0
      9f8:	11 24       	eor	r1, r1
-	// char c = UDR0;
-	// lcd_write_char(c);
-}
      9fa:	0f 90       	pop	r0
      9fc:	0f be       	out	0x3f, r0	; 63
      9fe:	0f 90       	pop	r0
@@ -1510,9 +1192,6 @@ ISR(USART0_RX_vect)
      a02:	18 95       	reti
 
 00000a04 <__vector_25>:
-
-ISR(ADC_vect)
-{
      a04:	1f 92       	push	r1
      a06:	0f 92       	push	r0
      a08:	0f b6       	in	r0, 0x3f	; 63
@@ -1520,7 +1199,6 @@ ISR(ADC_vect)
      a0c:	11 24       	eor	r1, r1
      a0e:	8f 93       	push	r24
      a10:	9f 93       	push	r25
-	ad_result = ADC;
      a12:	80 91 78 00 	lds	r24, 0x0078	; 0x800078 <__TEXT_REGION_LENGTH__+0x7e0078>
      a16:	90 91 79 00 	lds	r25, 0x0079	; 0x800079 <__TEXT_REGION_LENGTH__+0x7e0079>
      a1a:	90 93 ab 01 	sts	0x01AB, r25	; 0x8001ab <ad_result+0x1>
@@ -1534,39 +1212,56 @@ ISR(ADC_vect)
      a2e:	18 95       	reti
 
 00000a30 <timer_init>:
+* Output:
+* Notes:			10 ms, CTC
+******************************************************************************/
+void timer_init(void)
+{
+	TCCR0A = (1<<WGM01) | (0<<WGM00) | (1<<CS2) | (0<<CS1) | (1<<CS0);
      a30:	8d e0       	ldi	r24, 0x0D	; 13
      a32:	84 bd       	out	0x24, r24	; 36
+	OCR0A = 77;
      a34:	8d e4       	ldi	r24, 0x4D	; 77
      a36:	87 bd       	out	0x27, r24	; 39
+	TIMSK0 = (1<<OCIE0A);
      a38:	82 e0       	ldi	r24, 0x02	; 2
      a3a:	80 93 6e 00 	sts	0x006E, r24	; 0x80006e <__TEXT_REGION_LENGTH__+0x7e006e>
      a3e:	08 95       	ret
 
 00000a40 <external_int_init>:
+* Output:
+* Notes:
+******************************************************************************/
+void external_int_init(void)
+{
+	EICRA = (1<<ISC01) | (0<<ISC00);
      a40:	82 e0       	ldi	r24, 0x02	; 2
      a42:	80 93 69 00 	sts	0x0069, r24	; 0x800069 <__TEXT_REGION_LENGTH__+0x7e0069>
+	EIMSK = (1<<INT0);
      a46:	81 e0       	ldi	r24, 0x01	; 1
      a48:	8d bb       	out	0x1d, r24	; 29
      a4a:	08 95       	ret
 
 00000a4c <adc_init>:
+* Output:
+* Notes:
+******************************************************************************/
+void adc_init(void)
+{
+	ADMUX = 0;
      a4c:	10 92 7c 00 	sts	0x007C, r1	; 0x80007c <__TEXT_REGION_LENGTH__+0x7e007c>
+	ADCSRA = (1<<ADEN) | (1<<ADIE) | (1<<ADPS2) | (1<<ADPS1) | (1<<ADPS0);
      a50:	ea e7       	ldi	r30, 0x7A	; 122
      a52:	f0 e0       	ldi	r31, 0x00	; 0
      a54:	8f e8       	ldi	r24, 0x8F	; 143
      a56:	80 83       	st	Z, r24
+	ADCSRA |= (1<<ADSC);
      a58:	80 81       	ld	r24, Z
      a5a:	80 64       	ori	r24, 0x40	; 64
      a5c:	80 83       	st	Z, r24
      a5e:	08 95       	ret
 
 00000a60 <decimal_to_bcd>:
-* Description:		bcd error routine
-* Input:			-
-* Output:			-
-* Notes:			-
-******************************************************************************/
-void bcd_error(void) {}
      a60:	84 36       	cpi	r24, 0x64	; 100
      a62:	c8 f4       	brcc	.+50     	; 0xa96 <decimal_to_bcd+0x36>
      a64:	9d ec       	ldi	r25, 0xCD	; 205
@@ -1611,12 +1306,6 @@ void bcd_error(void) {}
      aae:	08 95       	ret
 
 00000ab0 <calc_day_of_week>:
-* Description:		
-* Input:			
-* Output:			
-* Notes:			
-******************************************************************************/
-uint8_t calc_day_of_week(uint16_t year, uint8_t month, uint8_t date) {
      ab0:	8f 92       	push	r8
      ab2:	9f 92       	push	r9
      ab4:	af 92       	push	r10
@@ -1631,9 +1320,6 @@ uint8_t calc_day_of_week(uint16_t year, uint8_t month, uint8_t date) {
      ac6:	7c 01       	movw	r14, r24
      ac8:	56 2f       	mov	r21, r22
      aca:	d4 2e       	mov	r13, r20
-	// output is between 0...6
-	// day of the week is calculated by the following formula
-	uint8_t century = year/100;
      acc:	8c 01       	movw	r16, r24
      ace:	16 95       	lsr	r17
      ad0:	07 95       	ror	r16
@@ -1646,7 +1332,6 @@ uint8_t calc_day_of_week(uint16_t year, uint8_t month, uint8_t date) {
      ade:	ec 01       	movw	r28, r24
      ae0:	d6 95       	lsr	r29
      ae2:	c7 95       	ror	r28
-	uint8_t day_of_week = ((int)(date + floor(2.6*month-0.2) - 2*century + year + floor(year/4) + floor(century/4))) % 7;
      ae4:	65 2f       	mov	r22, r21
      ae6:	70 e0       	ldi	r23, 0x00	; 0
      ae8:	80 e0       	ldi	r24, 0x00	; 0
@@ -1730,8 +1415,6 @@ uint8_t calc_day_of_week(uint16_t year, uint8_t month, uint8_t date) {
      b84:	67 e0       	ldi	r22, 0x07	; 7
      b86:	70 e0       	ldi	r23, 0x00	; 0
      b88:	b0 d3       	rcall	.+1888   	; 0x12ea <__divmodhi4>
-	return day_of_week;
-}
      b8a:	df 91       	pop	r29
      b8c:	cf 91       	pop	r28
      b8e:	1f 91       	pop	r17
@@ -1746,32 +1429,15 @@ uint8_t calc_day_of_week(uint16_t year, uint8_t month, uint8_t date) {
      ba0:	08 95       	ret
 
 00000ba2 <twi_init>:
-* Notes:			SCL Clock Frequency = 100 kHz
-					calculated from excel
-******************************************************************************/
-void twi_init(void) {
-	// For TWI, pullup resistors must be enabled
-	DDRD = (0<<PD0) | (0<<PD1);
      ba2:	1a b8       	out	0x0a, r1	; 10
-	PORTD = (1<<PD0) | (1<<PD0);
      ba4:	81 e0       	ldi	r24, 0x01	; 1
      ba6:	8b b9       	out	0x0b, r24	; 11
-	
-	// Set clock frequency
-	TWBR = 0x08;
      ba8:	88 e0       	ldi	r24, 0x08	; 8
      baa:	80 93 b8 00 	sts	0x00B8, r24	; 0x8000b8 <__TEXT_REGION_LENGTH__+0x7e00b8>
-	TWSR = (0<<TWPS1) | (0<<TWPS0);
      bae:	10 92 b9 00 	sts	0x00B9, r1	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
      bb2:	08 95       	ret
 
 00000bb4 <twi_mt_mode>:
-* Input:			current edit -> either TIME or DATE
-					second, minute, hour, date, month, year -> data that we want to send to the slave
-* Output:			-
-* Notes:			-
-******************************************************************************/
-void twi_mt_mode(uint8_t current_edit, uint8_t second, uint8_t minute, uint8_t hour, uint8_t date, uint8_t month, uint16_t year) {
      bb4:	cf 92       	push	r12
      bb6:	df 92       	push	r13
      bb8:	ef 92       	push	r14
@@ -1782,217 +1448,113 @@ void twi_mt_mode(uint8_t current_edit, uint8_t second, uint8_t minute, uint8_t h
      bc2:	c8 2f       	mov	r28, r24
      bc4:	14 2f       	mov	r17, r20
      bc6:	d2 2f       	mov	r29, r18
-	// Generate START Condition
-	TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
      bc8:	94 ea       	ldi	r25, 0xA4	; 164
      bca:	90 93 bc 00 	sts	0x00BC, r25	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
-	
-	// Wait for TWINT flag set, this indicates that the START condition has been transmitted
-	while(!(TWCR & (1<<TWINT)));
      bce:	90 91 bc 00 	lds	r25, 0x00BC	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
      bd2:	99 23       	and	r25, r25
      bd4:	e4 f7       	brge	.-8      	; 0xbce <twi_mt_mode+0x1a>
-	
-	// Check the status register
-	if((TWSR & 0xF8) != START) twi_error(TWSR);
      bd6:	90 91 b9 00 	lds	r25, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
      bda:	98 7f       	andi	r25, 0xF8	; 248
      bdc:	98 30       	cpi	r25, 0x08	; 8
      bde:	11 f0       	breq	.+4      	; 0xbe4 <twi_mt_mode+0x30>
      be0:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
-	
-	// Send slave address + write bit (0)
-	TWDR = DS1307_ADR_W;
      be4:	90 ed       	ldi	r25, 0xD0	; 208
      be6:	90 93 bb 00 	sts	0x00BB, r25	; 0x8000bb <__TEXT_REGION_LENGTH__+0x7e00bb>
-	
-	// Clear TWINT to start transmission of address
-	TWCR = (1<<TWINT) | (1<<TWEN);
      bea:	94 e8       	ldi	r25, 0x84	; 132
      bec:	90 93 bc 00 	sts	0x00BC, r25	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
-	
-	// Wait for TWINT flag set, this indicates that the SLA+W has been transmitted and ACK has been received
-	while(!(TWCR & (1<<TWINT)));
      bf0:	90 91 bc 00 	lds	r25, 0x00BC	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
      bf4:	99 23       	and	r25, r25
      bf6:	e4 f7       	brge	.-8      	; 0xbf0 <twi_mt_mode+0x3c>
-	
-	// Check the status register
-	if((TWSR & 0xF8) != MT_SLA_ACK) twi_error(TWSR);
      bf8:	90 91 b9 00 	lds	r25, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
      bfc:	98 7f       	andi	r25, 0xF8	; 248
      bfe:	98 31       	cpi	r25, 0x18	; 24
      c00:	11 f0       	breq	.+4      	; 0xc06 <twi_mt_mode+0x52>
      c02:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
-	
-	// Send word address (which sets the register pointer on the DS1307)
-	if(current_edit == TIME) {
      c06:	c1 11       	cpse	r28, r1
      c08:	03 c0       	rjmp	.+6      	; 0xc10 <twi_mt_mode+0x5c>
-		// Address of the first time register (Seconds)
-		TWDR = SEC_ADR;
      c0a:	10 92 bb 00 	sts	0x00BB, r1	; 0x8000bb <__TEXT_REGION_LENGTH__+0x7e00bb>
      c0e:	05 c0       	rjmp	.+10     	; 0xc1a <twi_mt_mode+0x66>
-	} else if(current_edit == DATE) {
      c10:	c1 30       	cpi	r28, 0x01	; 1
      c12:	19 f4       	brne	.+6      	; 0xc1a <twi_mt_mode+0x66>
-		// Address of the first date register (Day)
-		TWDR = DAY_ADR;
      c14:	83 e0       	ldi	r24, 0x03	; 3
      c16:	80 93 bb 00 	sts	0x00BB, r24	; 0x8000bb <__TEXT_REGION_LENGTH__+0x7e00bb>
-	}
-	
-	// Clear TWINT to start transmission of data
-	TWCR = (1<<TWINT) | (1<<TWEN);
      c1a:	94 e8       	ldi	r25, 0x84	; 132
      c1c:	90 93 bc 00 	sts	0x00BC, r25	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
-	
-	// Wait for TWINT flag set, this indicates that the data has been transmitted and ACK/NACK has been received
-	while(!(TWCR & (1<<TWINT)));
      c20:	90 91 bc 00 	lds	r25, 0x00BC	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
      c24:	99 23       	and	r25, r25
      c26:	e4 f7       	brge	.-8      	; 0xc20 <twi_mt_mode+0x6c>
-	
-	// Check the status register
-	if((TWSR & 0xF8) != MT_DATA_ACK) twi_error(TWSR);
      c28:	90 91 b9 00 	lds	r25, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
      c2c:	98 7f       	andi	r25, 0xF8	; 248
      c2e:	98 32       	cpi	r25, 0x28	; 40
      c30:	11 f0       	breq	.+4      	; 0xc36 <twi_mt_mode+0x82>
      c32:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
-	
-
-	// IMPORTANT! Data shall be written in BCD format!
-	// Send the first data
-	if(current_edit == TIME) {
      c36:	c1 11       	cpse	r28, r1
      c38:	05 c0       	rjmp	.+10     	; 0xc44 <twi_mt_mode+0x90>
-		// Data for the seconds register
-		if(decimal_to_bcd(second) == -1) bcd_error(); // do some error routine
-		TWDR = decimal_to_bcd(second) | (0<<CH);
      c3a:	86 2f       	mov	r24, r22
      c3c:	11 df       	rcall	.-478    	; 0xa60 <decimal_to_bcd>
      c3e:	80 93 bb 00 	sts	0x00BB, r24	; 0x8000bb <__TEXT_REGION_LENGTH__+0x7e00bb>
      c42:	08 c0       	rjmp	.+16     	; 0xc54 <twi_mt_mode+0xa0>
-	} else if(current_edit == DATE) {
      c44:	c1 30       	cpi	r28, 0x01	; 1
      c46:	31 f4       	brne	.+12     	; 0xc54 <twi_mt_mode+0xa0>
-		// Data for the day register
-		TWDR = calc_day_of_week(year, month, date);
      c48:	40 2f       	mov	r20, r16
      c4a:	6e 2d       	mov	r22, r14
      c4c:	c6 01       	movw	r24, r12
      c4e:	30 df       	rcall	.-416    	; 0xab0 <calc_day_of_week>
      c50:	80 93 bb 00 	sts	0x00BB, r24	; 0x8000bb <__TEXT_REGION_LENGTH__+0x7e00bb>
-	}
-	
-	// Clear TWINT to start transmission of data
-	TWCR = (1<<TWINT) | (1<<TWEN);
      c54:	84 e8       	ldi	r24, 0x84	; 132
      c56:	80 93 bc 00 	sts	0x00BC, r24	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
-	
-	// Wait for TWINT flag set, this indicates that the data has been transmitted and ACK/NACK has been received
-	while(!(TWCR & (1<<TWINT)));
      c5a:	80 91 bc 00 	lds	r24, 0x00BC	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
      c5e:	88 23       	and	r24, r24
      c60:	e4 f7       	brge	.-8      	; 0xc5a <twi_mt_mode+0xa6>
-	
-	// Check the status register
-	if((TWSR & 0xF8) != MT_DATA_ACK) twi_error(TWSR);
      c62:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
      c66:	88 7f       	andi	r24, 0xF8	; 248
      c68:	88 32       	cpi	r24, 0x28	; 40
      c6a:	11 f0       	breq	.+4      	; 0xc70 <twi_mt_mode+0xbc>
      c6c:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
-	
-	// Send the second data
-	if(current_edit == TIME) {
      c70:	c1 11       	cpse	r28, r1
-		// Data for the Minutes register
-		if(decimal_to_bcd(minute) == -1) bcd_error();
-		TWDR = decimal_to_bcd(minute);
      c72:	05 c0       	rjmp	.+10     	; 0xc7e <twi_mt_mode+0xca>
      c74:	81 2f       	mov	r24, r17
      c76:	f4 de       	rcall	.-536    	; 0xa60 <decimal_to_bcd>
      c78:	80 93 bb 00 	sts	0x00BB, r24	; 0x8000bb <__TEXT_REGION_LENGTH__+0x7e00bb>
      c7c:	06 c0       	rjmp	.+12     	; 0xc8a <twi_mt_mode+0xd6>
-	} else if(current_edit == DATE) {
      c7e:	c1 30       	cpi	r28, 0x01	; 1
-		// Data for the Date register
-		if(decimal_to_bcd(date) == -1) bcd_error();
-		TWDR = decimal_to_bcd(date);
      c80:	21 f4       	brne	.+8      	; 0xc8a <twi_mt_mode+0xd6>
      c82:	80 2f       	mov	r24, r16
      c84:	ed de       	rcall	.-550    	; 0xa60 <decimal_to_bcd>
      c86:	80 93 bb 00 	sts	0x00BB, r24	; 0x8000bb <__TEXT_REGION_LENGTH__+0x7e00bb>
-	}
-	
-	// Clear TWINT to start transmission of data
-	TWCR = (1<<TWINT) | (1<<TWEN);
      c8a:	84 e8       	ldi	r24, 0x84	; 132
      c8c:	80 93 bc 00 	sts	0x00BC, r24	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
-	
-	// Wait for TWINT flag set, this indicates that the data has been transmitted and ACK/NACK has been received
-	while(!(TWCR & (1<<TWINT)));
      c90:	80 91 bc 00 	lds	r24, 0x00BC	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
      c94:	88 23       	and	r24, r24
      c96:	e4 f7       	brge	.-8      	; 0xc90 <twi_mt_mode+0xdc>
-	
-	// Check the status register
-	if((TWSR & 0xF8) != MT_DATA_ACK) twi_error(TWSR);
      c98:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
      c9c:	88 7f       	andi	r24, 0xF8	; 248
      c9e:	88 32       	cpi	r24, 0x28	; 40
      ca0:	11 f0       	breq	.+4      	; 0xca6 <twi_mt_mode+0xf2>
      ca2:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
-	
-	// Send the third data
-	if(current_edit == TIME) {
      ca6:	c1 11       	cpse	r28, r1
-		// Data for the Hours register. This is the last data for TIME registers
-		if(decimal_to_bcd(hour) == -1) bcd_error();
-		TWDR = (0<<HOURMODE) | decimal_to_bcd(hour);
      ca8:	05 c0       	rjmp	.+10     	; 0xcb4 <twi_mt_mode+0x100>
      caa:	8d 2f       	mov	r24, r29
      cac:	d9 de       	rcall	.-590    	; 0xa60 <decimal_to_bcd>
      cae:	80 93 bb 00 	sts	0x00BB, r24	; 0x8000bb <__TEXT_REGION_LENGTH__+0x7e00bb>
-	} else if(current_edit == DATE) {
      cb2:	06 c0       	rjmp	.+12     	; 0xcc0 <twi_mt_mode+0x10c>
      cb4:	c1 30       	cpi	r28, 0x01	; 1
-		// Data for the Month register
-		if(decimal_to_bcd(month) == -1) bcd_error();
-		TWDR = decimal_to_bcd(month);
      cb6:	21 f4       	brne	.+8      	; 0xcc0 <twi_mt_mode+0x10c>
      cb8:	8e 2d       	mov	r24, r14
      cba:	d2 de       	rcall	.-604    	; 0xa60 <decimal_to_bcd>
      cbc:	80 93 bb 00 	sts	0x00BB, r24	; 0x8000bb <__TEXT_REGION_LENGTH__+0x7e00bb>
-	}
-	
-	// Clear TWINT to start transmission of data
-	TWCR = (1<<TWINT) | (1<<TWEN);
      cc0:	84 e8       	ldi	r24, 0x84	; 132
      cc2:	80 93 bc 00 	sts	0x00BC, r24	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
-	
-	// Wait for TWINT flag set, this indicates that the data has been transmitted and ACK/NACK has been received
-	while(!(TWCR & (1<<TWINT)));
      cc6:	80 91 bc 00 	lds	r24, 0x00BC	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
      cca:	88 23       	and	r24, r24
      ccc:	e4 f7       	brge	.-8      	; 0xcc6 <twi_mt_mode+0x112>
-	
-	// Check the status register
-	if((TWSR & 0xF8) != MT_DATA_ACK) twi_error(TWSR);
      cce:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
      cd2:	88 7f       	andi	r24, 0xF8	; 248
      cd4:	88 32       	cpi	r24, 0x28	; 40
      cd6:	11 f0       	breq	.+4      	; 0xcdc <twi_mt_mode+0x128>
      cd8:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
-	
-	// Send the fourth data
-	if(current_edit == DATE) {
      cdc:	c1 30       	cpi	r28, 0x01	; 1
      cde:	99 f4       	brne	.+38     	; 0xd06 <twi_mt_mode+0x152>
-		// Data for the Year Register (only the last two digits of the decimal 4-digit year is needed)
-		uint8_t year_short = year % 100;
      ce0:	96 01       	movw	r18, r12
      ce2:	36 95       	lsr	r19
      ce4:	27 95       	ror	r18
@@ -2003,8 +1565,6 @@ void twi_mt_mode(uint8_t current_edit, uint8_t second, uint8_t minute, uint8_t h
      cee:	19 d3       	rcall	.+1586   	; 0x1322 <__umulhisi3>
      cf0:	96 95       	lsr	r25
      cf2:	87 95       	ror	r24
-		if(decimal_to_bcd(year_short) == -1) bcd_error();
-		TWDR = decimal_to_bcd(year_short);
      cf4:	3c 2d       	mov	r19, r12
      cf6:	24 e6       	ldi	r18, 0x64	; 100
      cf8:	82 9f       	mul	r24, r18
@@ -2014,32 +1574,18 @@ void twi_mt_mode(uint8_t current_edit, uint8_t second, uint8_t minute, uint8_t h
      d00:	af de       	rcall	.-674    	; 0xa60 <decimal_to_bcd>
      d02:	80 93 bb 00 	sts	0x00BB, r24	; 0x8000bb <__TEXT_REGION_LENGTH__+0x7e00bb>
      d06:	84 e8       	ldi	r24, 0x84	; 132
-	}
-	
-	// Clear TWINT to start transmission of data
-	TWCR = (1<<TWINT) | (1<<TWEN);
      d08:	80 93 bc 00 	sts	0x00BC, r24	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
      d0c:	80 91 bc 00 	lds	r24, 0x00BC	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
-	
-	// Wait for TWINT flag set, this indicates that the data has been transmitted and ACK/NACK has been received
-	while(!(TWCR & (1<<TWINT)));
      d10:	88 23       	and	r24, r24
      d12:	e4 f7       	brge	.-8      	; 0xd0c <twi_mt_mode+0x158>
      d14:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
-	
-	// Check the status register
-	if((TWSR & 0xF8) != MT_DATA_ACK) twi_error(TWSR);
      d18:	88 7f       	andi	r24, 0xF8	; 248
      d1a:	88 32       	cpi	r24, 0x28	; 40
      d1c:	11 f0       	breq	.+4      	; 0xd22 <twi_mt_mode+0x16e>
      d1e:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
      d22:	84 e9       	ldi	r24, 0x94	; 148
-	
-	// Generate STOP Condition
-	TWCR = (1<<TWINT) | (1<<TWSTO) | (1<<TWEN);
      d24:	80 93 bc 00 	sts	0x00BC, r24	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
      d28:	df 91       	pop	r29
-}
      d2a:	cf 91       	pop	r28
      d2c:	1f 91       	pop	r17
      d2e:	0f 91       	pop	r16
@@ -2050,12 +1596,6 @@ void twi_mt_mode(uint8_t current_edit, uint8_t second, uint8_t minute, uint8_t h
 
 00000d38 <twi_mr_mode>:
      d38:	8f 92       	push	r8
-* Description:		Two-wire Serial Interface Master Receiver mode
-* Input:			*second, *minute, *hour, *date, *month, *year -> pointer adresses of the variables that we change 
-* Output:			-
-* Notes:			-
-******************************************************************************/
-void twi_mr_mode(uint8_t *second, uint8_t *minute, uint8_t *hour, uint8_t *date, uint8_t *month, uint16_t *year) {
      d3a:	9f 92       	push	r9
      d3c:	af 92       	push	r10
      d3e:	bf 92       	push	r11
@@ -2071,291 +1611,152 @@ void twi_mr_mode(uint8_t *second, uint8_t *minute, uint8_t *hour, uint8_t *date,
      d52:	5b 01       	movw	r10, r22
      d54:	6a 01       	movw	r12, r20
      d56:	e9 01       	movw	r28, r18
-	// Generate START Condition
-	TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
      d58:	84 ea       	ldi	r24, 0xA4	; 164
      d5a:	80 93 bc 00 	sts	0x00BC, r24	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
-	
-	// Wait for TWINT flag set, this indicates that the START condition has been transmitted
-	while(!(TWCR & (1<<TWINT)));
      d5e:	80 91 bc 00 	lds	r24, 0x00BC	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
      d62:	88 23       	and	r24, r24
      d64:	e4 f7       	brge	.-8      	; 0xd5e <twi_mr_mode+0x26>
-	
-	// Check the status register
-	if((TWSR & 0xF8) != START) twi_error(TWSR);
      d66:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
      d6a:	88 7f       	andi	r24, 0xF8	; 248
      d6c:	88 30       	cpi	r24, 0x08	; 8
      d6e:	11 f0       	breq	.+4      	; 0xd74 <twi_mr_mode+0x3c>
      d70:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
-	
-	// First we set up the DS1307 Register pointer to point to the first register we want to read: the seconds
-	// Send slave address + write bit (0)
-	TWDR = DS1307_ADR_W;
      d74:	80 ed       	ldi	r24, 0xD0	; 208
      d76:	80 93 bb 00 	sts	0x00BB, r24	; 0x8000bb <__TEXT_REGION_LENGTH__+0x7e00bb>
-	
-	// Clear TWINT to start transmission of address
-	TWCR = (1<<TWINT) | (1<<TWEN);
      d7a:	84 e8       	ldi	r24, 0x84	; 132
      d7c:	80 93 bc 00 	sts	0x00BC, r24	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
-	
-	// Wait for TWINT flag set, this indicates that the SLA+W has been transmitted and ACK has been received
-	while(!(TWCR & (1<<TWINT)));
      d80:	80 91 bc 00 	lds	r24, 0x00BC	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
      d84:	88 23       	and	r24, r24
      d86:	e4 f7       	brge	.-8      	; 0xd80 <twi_mr_mode+0x48>
-	
-	// Check the status register
-	if((TWSR & 0xF8) != MT_SLA_ACK) twi_error(TWSR);
      d88:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
      d8c:	88 7f       	andi	r24, 0xF8	; 248
      d8e:	88 31       	cpi	r24, 0x18	; 24
      d90:	11 f0       	breq	.+4      	; 0xd96 <twi_mr_mode+0x5e>
      d92:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
-	
-	// Send word address (which sets the register pointer on the DS1307)
-	TWDR = SEC_ADR;
      d96:	10 92 bb 00 	sts	0x00BB, r1	; 0x8000bb <__TEXT_REGION_LENGTH__+0x7e00bb>
-	
-	// Clear TWINT to start transmission of data
-	TWCR = (1<<TWINT) | (1<<TWEN);
      d9a:	84 e8       	ldi	r24, 0x84	; 132
      d9c:	80 93 bc 00 	sts	0x00BC, r24	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
-	
-	// Wait for TWINT flag set, this indicates that the data has been transmitted and ACK/NACK has been received
-	while(!(TWCR & (1<<TWINT)));
      da0:	80 91 bc 00 	lds	r24, 0x00BC	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
      da4:	88 23       	and	r24, r24
      da6:	e4 f7       	brge	.-8      	; 0xda0 <twi_mr_mode+0x68>
-	
-	// Check the status register
-	if((TWSR & 0xF8) != MT_DATA_ACK) twi_error(TWSR);
      da8:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
      dac:	88 7f       	andi	r24, 0xF8	; 248
      dae:	88 32       	cpi	r24, 0x28	; 40
      db0:	11 f0       	breq	.+4      	; 0xdb6 <twi_mr_mode+0x7e>
      db2:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
-	
-	// Generate REPEATED START Condition
-	TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
      db6:	84 ea       	ldi	r24, 0xA4	; 164
      db8:	80 93 bc 00 	sts	0x00BC, r24	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
-	
-	// Wait for TWINT flag set, this indicates that the REPEATED START condition has been transmitted
-	while(!(TWCR & (1<<TWINT)));
      dbc:	80 91 bc 00 	lds	r24, 0x00BC	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
      dc0:	88 23       	and	r24, r24
      dc2:	e4 f7       	brge	.-8      	; 0xdbc <twi_mr_mode+0x84>
-	
-	// Check the status register
-	if((TWSR & 0xF8) != REP_START) twi_error(TWSR);
      dc4:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
      dc8:	88 7f       	andi	r24, 0xF8	; 248
      dca:	80 31       	cpi	r24, 0x10	; 16
      dcc:	11 f0       	breq	.+4      	; 0xdd2 <twi_mr_mode+0x9a>
      dce:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
-	
-	// Send slave address + read bit (1)
-	TWDR = DS1307_ADR_R;
      dd2:	81 ed       	ldi	r24, 0xD1	; 209
      dd4:	80 93 bb 00 	sts	0x00BB, r24	; 0x8000bb <__TEXT_REGION_LENGTH__+0x7e00bb>
-	
-	// Clear TWINT to start transmission of address
-	TWCR = (1<<TWINT) | (1<<TWEN);
      dd8:	84 e8       	ldi	r24, 0x84	; 132
      dda:	80 93 bc 00 	sts	0x00BC, r24	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
-	
-	// Wait for TWINT flag set, this indicates that the SLA+W has been transmitted and ACK has been received
-	while(!(TWCR & (1<<TWINT)));
      dde:	80 91 bc 00 	lds	r24, 0x00BC	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
      de2:	88 23       	and	r24, r24
      de4:	e4 f7       	brge	.-8      	; 0xdde <twi_mr_mode+0xa6>
-	
-	// Check the status register
-	if((TWSR & 0xF8) != MR_SLA_ACK) twi_error(TWSR);
      de6:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
      dea:	88 7f       	andi	r24, 0xF8	; 248
      dec:	80 34       	cpi	r24, 0x40	; 64
      dee:	11 f0       	breq	.+4      	; 0xdf4 <twi_mr_mode+0xbc>
      df0:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
-	
-	// Clear TWINT to start receiving the data and send ACK
-	TWCR = (1<<TWINT) | (1<<TWEA) | (1<<TWEN);
      df4:	84 ec       	ldi	r24, 0xC4	; 196
      df6:	80 93 bc 00 	sts	0x00BC, r24	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
-	
-	// Wait for TWINT flag set, this indicates that the data has been received and ACK has been sent
-	while(!(TWCR & (1<<TWINT)));
      dfa:	80 91 bc 00 	lds	r24, 0x00BC	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
      dfe:	88 23       	and	r24, r24
      e00:	e4 f7       	brge	.-8      	; 0xdfa <twi_mr_mode+0xc2>
-	
-	// Check the status register
-	if((TWSR & 0xF8) != MR_DATA_ACK) twi_error(TWSR);
      e02:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
      e06:	88 7f       	andi	r24, 0xF8	; 248
      e08:	80 35       	cpi	r24, 0x50	; 80
      e0a:	11 f0       	breq	.+4      	; 0xe10 <twi_mr_mode+0xd8>
      e0c:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
-	
-	// Read the first received data byte (seconds)
-	uint8_t sec_bcd = (TWDR | (1<<CH)) ^ (1<<CH);
      e10:	80 91 bb 00 	lds	r24, 0x00BB	; 0x8000bb <__TEXT_REGION_LENGTH__+0x7e00bb>
-	*second = bcd_to_decimal(sec_bcd);
      e14:	8f 77       	andi	r24, 0x7F	; 127
      e16:	41 de       	rcall	.-894    	; 0xa9a <bcd_to_decimal>
      e18:	f4 01       	movw	r30, r8
      e1a:	80 83       	st	Z, r24
-	
-	// Clear TWINT to start receiving the data and send ACK
-	TWCR = (1<<TWINT) | (1<<TWEA) | (1<<TWEN);
      e1c:	84 ec       	ldi	r24, 0xC4	; 196
      e1e:	80 93 bc 00 	sts	0x00BC, r24	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
-	
-	// Wait for TWINT flag set, this indicates that the data has been received and ACK has been sent
-	while(!(TWCR & (1<<TWINT)));
      e22:	80 91 bc 00 	lds	r24, 0x00BC	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
      e26:	88 23       	and	r24, r24
      e28:	e4 f7       	brge	.-8      	; 0xe22 <twi_mr_mode+0xea>
-	
-	// Check the status register
-	if((TWSR & 0xF8) != MR_DATA_ACK) twi_error(TWSR);
      e2a:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
      e2e:	88 7f       	andi	r24, 0xF8	; 248
      e30:	80 35       	cpi	r24, 0x50	; 80
      e32:	11 f0       	breq	.+4      	; 0xe38 <twi_mr_mode+0x100>
      e34:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
-	
-	// Read the second received data byte (minutes)
-	*minute = bcd_to_decimal(TWDR);
      e38:	80 91 bb 00 	lds	r24, 0x00BB	; 0x8000bb <__TEXT_REGION_LENGTH__+0x7e00bb>
      e3c:	2e de       	rcall	.-932    	; 0xa9a <bcd_to_decimal>
      e3e:	f5 01       	movw	r30, r10
      e40:	80 83       	st	Z, r24
-	
-	// Clear TWINT to start receiving the data and send ACK
-	TWCR = (1<<TWINT) | (1<<TWEA) | (1<<TWEN);
      e42:	84 ec       	ldi	r24, 0xC4	; 196
      e44:	80 93 bc 00 	sts	0x00BC, r24	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
-	
-	// Wait for TWINT flag set, this indicates that the data has been received and ACK has been sent
-	while(!(TWCR & (1<<TWINT)));
      e48:	80 91 bc 00 	lds	r24, 0x00BC	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
      e4c:	88 23       	and	r24, r24
      e4e:	e4 f7       	brge	.-8      	; 0xe48 <twi_mr_mode+0x110>
-	
-	// Check the status register
-	if((TWSR & 0xF8) != MR_DATA_ACK) twi_error(TWSR);
      e50:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
      e54:	88 7f       	andi	r24, 0xF8	; 248
      e56:	80 35       	cpi	r24, 0x50	; 80
      e58:	11 f0       	breq	.+4      	; 0xe5e <twi_mr_mode+0x126>
      e5a:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
-	
-	// Read the third received data byte (hours)
-	*hour = bcd_to_decimal(TWDR);
      e5e:	80 91 bb 00 	lds	r24, 0x00BB	; 0x8000bb <__TEXT_REGION_LENGTH__+0x7e00bb>
      e62:	1b de       	rcall	.-970    	; 0xa9a <bcd_to_decimal>
      e64:	f6 01       	movw	r30, r12
      e66:	80 83       	st	Z, r24
-	
-	// Clear TWINT to start receiving the data and send ACK
-	TWCR = (1<<TWINT) | (1<<TWEA) | (1<<TWEN);
      e68:	84 ec       	ldi	r24, 0xC4	; 196
      e6a:	80 93 bc 00 	sts	0x00BC, r24	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
-	
-	// Wait for TWINT flag set, this indicates that the data has been received and ACK has been sent
-	while(!(TWCR & (1<<TWINT)));
      e6e:	80 91 bc 00 	lds	r24, 0x00BC	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
      e72:	88 23       	and	r24, r24
      e74:	e4 f7       	brge	.-8      	; 0xe6e <twi_mr_mode+0x136>
-	
-	// Check the status register
-	if((TWSR & 0xF8) != MR_DATA_ACK) twi_error(TWSR);
      e76:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
      e7a:	88 7f       	andi	r24, 0xF8	; 248
      e7c:	80 35       	cpi	r24, 0x50	; 80
      e7e:	11 f0       	breq	.+4      	; 0xe84 <twi_mr_mode+0x14c>
      e80:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
-	
-	// Read the fourth received data byte (Day Register)
-	uint8_t day = bcd_to_decimal(TWDR);
      e84:	80 91 bb 00 	lds	r24, 0x00BB	; 0x8000bb <__TEXT_REGION_LENGTH__+0x7e00bb>
-	
-	// Clear TWINT to start receiving the data and send ACK
-	TWCR = (1<<TWINT) | (1<<TWEA) | (1<<TWEN);
      e88:	84 ec       	ldi	r24, 0xC4	; 196
      e8a:	80 93 bc 00 	sts	0x00BC, r24	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
-	
-	// Wait for TWINT flag set, this indicates that the data has been received and ACK has been sent
-	while(!(TWCR & (1<<TWINT)));
      e8e:	80 91 bc 00 	lds	r24, 0x00BC	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
      e92:	88 23       	and	r24, r24
      e94:	e4 f7       	brge	.-8      	; 0xe8e <twi_mr_mode+0x156>
-	
-	// Check the status register
-	if((TWSR & 0xF8) != MR_DATA_ACK) twi_error(TWSR);
      e96:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
      e9a:	88 7f       	andi	r24, 0xF8	; 248
      e9c:	80 35       	cpi	r24, 0x50	; 80
      e9e:	11 f0       	breq	.+4      	; 0xea4 <twi_mr_mode+0x16c>
      ea0:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
-	
-	// Read the fifth received data byte (Date register)
-	*date = bcd_to_decimal(TWDR);
      ea4:	80 91 bb 00 	lds	r24, 0x00BB	; 0x8000bb <__TEXT_REGION_LENGTH__+0x7e00bb>
      ea8:	f8 dd       	rcall	.-1040   	; 0xa9a <bcd_to_decimal>
      eaa:	88 83       	st	Y, r24
-	
-	// Clear TWINT to start receiving the data and send ACK
-	TWCR = (1<<TWINT) | (1<<TWEA) | (1<<TWEN);
      eac:	84 ec       	ldi	r24, 0xC4	; 196
      eae:	80 93 bc 00 	sts	0x00BC, r24	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
-	
-	// Wait for TWINT flag set, this indicates that the data has been received and ACK has been sent
-	while(!(TWCR & (1<<TWINT)));
      eb2:	80 91 bc 00 	lds	r24, 0x00BC	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
      eb6:	88 23       	and	r24, r24
      eb8:	e4 f7       	brge	.-8      	; 0xeb2 <twi_mr_mode+0x17a>
-	
-	// Check the status register
-	if((TWSR & 0xF8) != MR_DATA_ACK) twi_error(TWSR);
      eba:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
      ebe:	88 7f       	andi	r24, 0xF8	; 248
      ec0:	80 35       	cpi	r24, 0x50	; 80
      ec2:	11 f0       	breq	.+4      	; 0xec8 <twi_mr_mode+0x190>
      ec4:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
-	
-	// Read the sixth received data byte (Month register)
-	*month = bcd_to_decimal(TWDR);
      ec8:	80 91 bb 00 	lds	r24, 0x00BB	; 0x8000bb <__TEXT_REGION_LENGTH__+0x7e00bb>
      ecc:	e6 dd       	rcall	.-1076   	; 0xa9a <bcd_to_decimal>
      ece:	f8 01       	movw	r30, r16
      ed0:	80 83       	st	Z, r24
-	
-	// Clear TWINT to start receiving the data and send NACK (since the last byte will be received)
-	TWCR = (1<<TWINT) | (1<<TWEN);
      ed2:	84 e8       	ldi	r24, 0x84	; 132
      ed4:	80 93 bc 00 	sts	0x00BC, r24	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
-	
-	// Wait for TWINT flag set, this indicates that the data has been received and NACK has been sent
-	while(!(TWCR & (1<<TWINT)));
      ed8:	80 91 bc 00 	lds	r24, 0x00BC	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
      edc:	88 23       	and	r24, r24
      ede:	e4 f7       	brge	.-8      	; 0xed8 <twi_mr_mode+0x1a0>
-	
-	// Check the status register
-	if((TWSR & 0xF8) != MR_DATA_NACK) twi_error(TWSR);
      ee0:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
      ee4:	88 7f       	andi	r24, 0xF8	; 248
      ee6:	88 35       	cpi	r24, 0x58	; 88
      ee8:	11 f0       	breq	.+4      	; 0xeee <twi_mr_mode+0x1b6>
      eea:	80 91 b9 00 	lds	r24, 0x00B9	; 0x8000b9 <__TEXT_REGION_LENGTH__+0x7e00b9>
-	
-	// Read the seventh (last) data byte (Year register)
-	*year = bcd_to_decimal(TWDR) + 2000;
      eee:	80 91 bb 00 	lds	r24, 0x00BB	; 0x8000bb <__TEXT_REGION_LENGTH__+0x7e00bb>
      ef2:	d3 dd       	rcall	.-1114   	; 0xa9a <bcd_to_decimal>
      ef4:	90 e0       	ldi	r25, 0x00	; 0
@@ -2364,9 +1765,6 @@ void twi_mr_mode(uint8_t *second, uint8_t *minute, uint8_t *hour, uint8_t *date,
      efa:	f7 01       	movw	r30, r14
      efc:	91 83       	std	Z+1, r25	; 0x01
      efe:	80 83       	st	Z, r24
-	
-	// Generate STOP Condition
-	TWCR = (1<<TWINT) |(1<<TWSTO) | (1<<TWEN);
      f00:	84 e9       	ldi	r24, 0x94	; 148
      f02:	80 93 bc 00 	sts	0x00BC, r24	; 0x8000bc <__TEXT_REGION_LENGTH__+0x7e00bc>
      f06:	df 91       	pop	r29
@@ -2384,10 +1782,21 @@ void twi_mr_mode(uint8_t *second, uint8_t *minute, uint8_t *hour, uint8_t *date,
      f1e:	08 95       	ret
 
 00000f20 <uart0_init>:
+* Notes:
+******************************************************************************/
+void uart0_init(uint16_t baud)
+{
+	/* Set baud rate */
+	UBRR0H = (unsigned char) (baud>>8);
      f20:	90 93 c5 00 	sts	0x00C5, r25	; 0x8000c5 <__TEXT_REGION_LENGTH__+0x7e00c5>
+	UBRR0L = (unsigned char) baud;
      f24:	80 93 c4 00 	sts	0x00C4, r24	; 0x8000c4 <__TEXT_REGION_LENGTH__+0x7e00c4>
+	/* Set frame format: 8data, no parity & 1 stop bits */
+	UCSR0C = (0<<UMSEL0) | (0<<UPM0) | (1<<USBS0) | (1<<UCSZ1) | (1<<UCSZ0);
      f28:	8e e0       	ldi	r24, 0x0E	; 14
      f2a:	80 93 c2 00 	sts	0x00C2, r24	; 0x8000c2 <__TEXT_REGION_LENGTH__+0x7e00c2>
+	/* Enable receiver and transmitter */
+	UCSR0B = (1<<RXEN0) | (1<<TXEN0) | (1<<RXCIE0);
      f2e:	88 e9       	ldi	r24, 0x98	; 152
      f30:	80 93 c1 00 	sts	0x00C1, r24	; 0x8000c1 <__TEXT_REGION_LENGTH__+0x7e00c1>
      f34:	08 95       	ret

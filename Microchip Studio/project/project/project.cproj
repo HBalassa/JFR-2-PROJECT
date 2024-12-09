@@ -153,6 +153,12 @@
     <Compile Include="peripherals.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="thermometer.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="thermometer.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="twi.c">
       <SubType>compile</SubType>
     </Compile>
