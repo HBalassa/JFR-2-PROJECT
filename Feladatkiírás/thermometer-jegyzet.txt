@@ -243,3 +243,116 @@ ALARM SEARCH [0xEC]
 * this allows the master to determine if any DS18S20 experiences an alarm condition
 * After the Alarm Search cycle (ALARM SEARCH followed by data exchange) the bus must return to step 1 (initialization) 
 
+****************************
+DS18S20 FUNCTION COMMANDS 
+****************************
+* after the ROM command, which addressed the DS18S20 the master can issue the DS18S20 function commands 
+* these allow the master to write to and read from the DS18S20 scratchpad memory, initiate temperature conversion and determine the power supply mode 
+
+CONVERT T [0x44]
+* this command initiates a single temperature conversion 
+* following the conversion, the temperature data is stored in the 2-byte temperature register in the scratchpad memory and the DS18S20 returns to its low power ide state 
+* if the device is in parasite power mode within 10 mikrosec after this command is issued, the master must enable a strong pullup on the 1-wire bus 
+* if the master is in external power supply, the master can issue read time slots after the Convert T command, and the DS18S20 transmits 0 while temperature comversion is in progress and 1 when it's done 
+* in parasite power mode this technique cannot be used 
+
+WRITE SCRATCHPAD [0x4E] 
+* this allows the master to write 2 bytes of data to the DS18S20 scratchpad 
+* the first byte -> TH register 
+* the second byte -> TL register 
+* data is transmitted from the LS bit 
+* both must be written before the master issues a reset 
+
+READ SCRATCHPAD [0xBE]
+* this allows the master to read the contents of scratchpad 
+* data transfer starts with the LS but of byte 0, and continues until the 9th byte 
+* the master can issue a reset at any time, if only some part of the scratchpad is needed 
+
+COPY SCRATCHPAD [0x48]
+* copies the contents of scratchpad TH and TL registers to EEPROM 
+* if the device is used in parasite power mode within 10 mikrosec after this command is issued the master must enable a strong pullup resistor for at least 10 millisec
+
+REACALL E2 [0xB8]
+* this command recalls the alarm trigger values TH and TL from EEPROM and places values to TH and TL registers in scratchpad
+* the master can issue read-time slots following this command
+* the DS18S20 will indicate the status of the recall by transmitting 0 while the recall is in progress and 1 when it's done 
+* the recall happens automatically when powered up
+
+READ POWER SUPPLY [0xB4] 
+* the master issues this command followed by a read-time slot to determine if any DS18S20 are using parasite power mode 
+* during the read-time slot parasite power DS18S20 will pull the bus LOW, and externally powered DS18S20 will let the bus remain HIGH 
+
+****************************
+1-WIRE SIGNALING 
+****************************
+* the DS18S20 uses 1-wire communication protocol 
+* several signal types are defined:
+  - reset pulse 
+  - presence pulse (initiated by the DS18S20)
+  - write 0
+  - write 1
+  - read 0
+  - read 1 
+all these are initiated by the master except the presence pulse 
+
+****************************
+INITIALIZING PROCEDURE - RESET AND PRESENCE PULSES
+****************************
+* all communication begins with the initialization sequence, that consists of the reset and the presence pulses 
+* the reset pulse is initiated by the master 
+* the presence is initiated by the DS18S20
+* if the DS18S20 sends a presence pulse it indicates that the bus is ready to operate 
+
+RESET PULSE 
+* the master pulls the 1-wire bus LOW for minimum 480 mikrosec 
+* than the master releases the bus and goes into receive mode 
+* when the bus is released the pullup resistor pulls the bus to HIGH 
+
+PRESENCE PULSE 
+* when the DS18S20 detects this rising edge, it waits 15 mikrosec to 60 mikrosec and then pulls the 1-wire bus LOW for 60-240 mikrosec 
+* this is the presence pulse 
+
+****************************
+READ/WRITE TIME SLOTS 
+****************************
+* the master writes data during the write time slot and reads during the read-time slot 
+* one bit is transmitted over the 1-wire bus per time slot
+
+****************************
+WRITE TIME SLOTS 
+****************************
+* two types of write time slots:
+  - write 1 -> write a logic 1 to the DS18S20
+  - write 0 -> write a logic 0 to the DS18S20 
+* write time slots must be a minimum of 60 mikrosec in duration with a minimum of a 1 mikrosec recovery time between write slots 
+* both write slots are initiated by pulling the 1-wire bus LOW 
+
+WRITE 1
+* to generate a write 1 slot after pulling the bus LOW, the master must release the bus within 15 mikrosec
+* when the bus is released the pullup resistor pulls the bus HIGH 
+
+WRITE 0
+* to generate a write 0 slot after pulling the bus LOW, the master must continue to hold the bus low for the duration of the time slot (at least 60 mikrosec)
+
+* the DS18S20 samples the 1-wire bus during a window that lasts from 15-60 mikrosec after the master initiates the write time slot 
+* if the bus is HIGH during this sampling window, 1 is written to the DS18S20; of the bus is LOW a 0 is written to the DS18S20
+
+****************************
+READ TIME SLOTS 
+****************************
+* the DS18S20 can only transmit data to the master when the master issues a read-time slot 
+* the master must issue a read-time slot immediately after issuing the READ SCRATCHPAD of READ POWER SUPPLY commands 
+* the master can generate read-time slot after issuing CONVERT T of RECALL E2 commands to find the status of the operation, but only if the DS18S20 is powered externally 
+* read-time slots must be a minimum of 60 mikrosec in duration with a minimum of a 1 mikrosec recovery time between slots 
+* a read-time slot is initiated by the master pulling the 1-wire bus LOW for a minimum of 1 mikrosec and then releasing the bus 
+* after this read-time slot was initiated, the DS18S20 will begin transmitting a 1 or a 0
+
+READ 1
+* the DS18S20 transmits a 1 by leaving the bus high
+
+READ 0
+* the DS18S20 transmits a 0 by pulling the bus low 
+* at the end of the time slot the DS18S20 will release the bus and the bus is pulled HIGH by the pullup resistor 
+
+* output data is valid for 15 mikrosec after the falling edge that initiated the read time slot 
+* the master must release the bus and then sample the bus state within 15 mikrosec from the time slot start 
