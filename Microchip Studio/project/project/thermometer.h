@@ -1,6 +1,5 @@
-#ifndef LCD_H_
-#define LCD_H_
-
+#ifndef THERMOMETER_H_
+#define THERMOMETER_H_
 
 /******************************************************************************
 * Include files
@@ -20,21 +19,33 @@
 /******************************************************************************
 * Macros
 ******************************************************************************/
-//LCD
-#define LCD_D7 7
-#define LCD_D6 6
-#define LCD_D5 5
-#define LCD_D4 4
+#define F_CPU 8000000UL
 
-#define LCD_E 3
-#define LCD_RS 2
+#define LOW 0
+#define HIGH 1
+
+#define FALSE 0
+#define TRUE 1
+
+// ROM Commands
+#define SEARCH_ROM 0xF0
+#define READ_ROM 0x33
+#define MATCH_ROM 0x55
+#define SKIP_ROM 0xCC
+#define ALARM_SEARCH 0xEC
+
+// Function Commands
+#define CONVERT_T 0x44
+#define READ_SCRATCHPAD 0xBE
+#define WRITE_SCRATCHPAD 0x4E
+#define COPY_SCRATCHPAD 0x48
+#define RECALL_E2 0xB8
+#define READ_POWER_SUPPLY 0xB4
 
 /******************************************************************************
 * Global Function Declarations
 ******************************************************************************/
-void lcd_init(void);
-void lcd_write_char(char c);
-void lcd_set_cursor_position(uint8_t pos);
-void lcd_clear_display(void);
-void lcd_write_string(char *c);
-#endif /* LCD_H_ */
+int16_t read_temperature(void);
+
+
+#endif /* THERMOMETER_H_ */
