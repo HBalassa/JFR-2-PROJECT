@@ -87,6 +87,33 @@ Discarded input sections
  .text          0x00000000        0x0 peripherals.o
  .data          0x00000000        0x0 peripherals.o
  .bss           0x00000000        0x0 peripherals.o
+ .text          0x00000000        0x0 thermometer.o
+ .data          0x00000000        0x0 thermometer.o
+ .bss           0x00000000        0x0 thermometer.o
+ .text.set_input
+                0x00000000        0x6 thermometer.o
+ .text.set_output
+                0x00000000       0x14 thermometer.o
+ .text.reset_presence_pulse
+                0x00000000       0x3c thermometer.o
+ .text.write_slot
+                0x00000000       0x3e thermometer.o
+ .text.read_slot
+                0x00000000       0x36 thermometer.o
+ .text.write_8_bit
+                0x00000000       0x54 thermometer.o
+ .text.read_temperature
+                0x00000000       0x60 thermometer.o
+ .debug_info    0x00000000      0x52f thermometer.o
+ .debug_abbrev  0x00000000      0x1a6 thermometer.o
+ .debug_loc     0x00000000      0x47a thermometer.o
+ .debug_aranges
+                0x00000000       0x50 thermometer.o
+ .debug_ranges  0x00000000       0x58 thermometer.o
+ .debug_line    0x00000000      0x344 thermometer.o
+ .debug_str     0x00000000      0x282 thermometer.o
+ .comment       0x00000000       0x31 thermometer.o
+ .debug_frame   0x00000000       0xb0 thermometer.o
  .text          0x00000000        0x0 twi.o
  .data          0x00000000        0x0 twi.o
  .bss           0x00000000        0x0 twi.o
@@ -298,6 +325,7 @@ LOAD C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.7.374/gcc/
 LOAD lcd.o
 LOAD main.o
 LOAD peripherals.o
+LOAD thermometer.o
 LOAD twi.o
 LOAD uart.o
 START GROUP

@@ -8,6 +8,8 @@ main.c
 
 peripherals.c
 
+thermometer.c
+
 twi.c
 
 uart.c
