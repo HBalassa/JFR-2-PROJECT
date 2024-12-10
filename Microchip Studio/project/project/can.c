@@ -48,7 +48,7 @@ void can_init(void)
 {
 	CANGCON = (1<<ENASTB); //Enable CAN peripheral
 	CANGIE = (1<<ENRX); //Enable receive interrupt
-	CANIE2 = (1<<IEMOB0); //Enable MOB0 interrputs
+	CANIE2 = (1<<IEMOB0) | (1<<IEMOB1); //Enable MOB0 interrputs
 	
 	CANBT1 = 0x02; // Set CAN baud rate to 500K, based on datasheet page 268. (Table 19.2)
 	CANBT2 = 0x04;

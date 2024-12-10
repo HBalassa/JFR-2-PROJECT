@@ -84,12 +84,11 @@ uint16_t homerseklet = 0;
 uint8_t PD0_re_enable_cnt = 0;
 
 uint8_t can_rx_data[8];
-uint32_t can_rx_id = 0x00000011;
+uint32_t can_rx_id = 0x000001FE;
 uint8_t can_rx_extended_id = FALSE;
 uint8_t can_rx_length;
 uint8_t can_msg_received=FALSE;
 
-uint8_t can_tx_data[8];
 
 
 /******************************************************************************
@@ -417,6 +416,7 @@ int main(void)
 		if(task_1s)
 		{
 			//CAN küldés
+			//Détum, idõ
 			
 			uint8_t cnt_4bit = 3;
 			
@@ -430,14 +430,24 @@ int main(void)
 			uint8_t masodperc_2345_bit = masodperc & (0b00111100);
 			
 			uint8_t can_tx_data[5];
-			can_tx_data[0] = ev_rovid | (honap_0_bit<7);
-			can_tx_data[1] = honap_123_bit | (hetnapja<<3) | (nap_01_bit<<6);
-			can_tx_data[2] = nap_234_bit | (ora<<3);
+			can_tx_data[0] = ev_rovid | (honap_0_bit<<7);
+			can_tx_data[1] = (honap_123_bit>>1) | (hetnapja<<3) | (nap_01_bit<<6);
+			can_tx_data[2] = (nap_234_bit>>2) | (ora<<3);
 			can_tx_data[3] = perc | (masodperc_01_bit<<6);
-			can_tx_data[4] = masodperc_2345_bit |(cnt_4bit<<4);
-			CAN_SendMob(1,0x1FFFFFFF,TRUE,2,can_tx_data);
-			CAN_SendMob(2,0x000007FF,FALSE,2,can_tx_data);
-			task_1s = FALSE;
+			can_tx_data[4] = (masodperc_2345_bit>>2) |(cnt_4bit<<4); //cnt is checking if data is sent
+			CAN_SendMob(0,0x1FE,FALSE,5,can_tx_data); 		 //(can page, id, FALSE, size, data)
+			
+			
+			
+			//Hõmérséklet:
+			
+			
+			uint8_t can_tx_data_1[2];
+			can_tx_data_1[0] = 0x00; 
+			can_tx_data_1[1] = 99; 
+			CAN_SendMob(1,0x1FF,FALSE,2,can_tx_data_1);
+			
+			task_1s = FALSE;		
 		}
     }
 }
