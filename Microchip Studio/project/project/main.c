@@ -78,7 +78,7 @@ uint8_t edited_value = 0;
 char edited_text[6];
 
 // temperature variable
-uint16_t homerseklet = 0;
+int16_t homerseklet = 0; 
 
 //CAN
 uint8_t PD0_re_enable_cnt = 0;
@@ -440,11 +440,14 @@ int main(void)
 			
 			
 			//Hõmérséklet:
-			
+			homerseklet = 28;
+			int16_t homerseklet_can = (homerseklet-100) * 10;
+			uint8_t homerseklet_can0_8 = (uint8_t)homerseklet_can;
+			uint8_t homerseklet_can9_12 = (uint8_t)(homerseklet_can>>8);
 			
 			uint8_t can_tx_data_1[2];
-			can_tx_data_1[0] = 0x00; 
-			can_tx_data_1[1] = 99; 
+			can_tx_data_1[0] = homerseklet_can0_8; 
+			can_tx_data_1[1] = homerseklet_can9_12; 
 			CAN_SendMob(1,0x1FF,FALSE,2,can_tx_data_1);
 			
 			task_1s = FALSE;		
