@@ -138,6 +138,12 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="can.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="can.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="lcd.c">
       <SubType>compile</SubType>
     </Compile>
@@ -151,6 +157,12 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="peripherals.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="thermometer.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="thermometer.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="twi.c">

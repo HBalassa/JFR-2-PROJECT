@@ -1,5 +1,5 @@
 /******************************************************************************
- * Created:		13-11-2024
+ * Created:		11-12-2024
  * Author :		Bence Bakonyvari & Balassa Hodi & Zalan Simon
 ******************************************************************************/
  /******************************************************************************
@@ -17,6 +17,8 @@
 #include "uart.h"
 #include "peripherals.h"
 #include "twi.h"
+#include "thermometer.h"
+#include "can.h"
 
 /******************************************************************************
 * Macros
@@ -40,7 +42,7 @@
 * Global Variables
 ******************************************************************************/
 uint16_t timer_cnt=0;
-uint8_t task_10ms = FALSE, task_100ms = FALSE, task_500ms = FALSE;
+uint8_t task_10ms = FALSE, task_100ms = FALSE, task_500ms = FALSE, task_1s = FALSE;
 uint16_t ad_result;
 
 // button pressed
@@ -160,6 +162,9 @@ int main(void)
 	
 	// TWI initialization
 	twi_init();
+	
+	// CAN initialization
+	can_init();
 	
 	sei();
 	
@@ -349,8 +354,8 @@ int main(void)
 				} else {
 					if(time_edit_save == EDIT) sprintf(string_for_write, "%02d:%02d %10s", ora, perc, edited_text);
 					if(time_edit_save == SAVE) {
-						//sprintf(string_for_write, "%04d%02d%02d %02d%02d %02d", ev, honap, nap, ora, perc, homerseklet);
-						sprintf(string_for_write, "%04d%02d%02d %02d%02d %02d", ev, honap, nap, ora, perc, masodperc);
+						sprintf(string_for_write, "%04d%02d%02d %02d%02d %02d", ev, honap, nap, ora, perc, homerseklet);
+						// sprintf(string_for_write, "%04d%02d%02d %02d%02d %02d", ev, honap, nap, ora, perc, masodperc);
 						curr_edit = NOEDIT;
 					}
 				}
@@ -363,16 +368,16 @@ int main(void)
 				} else {
 					if(date_edit_save == EDIT) sprintf(string_for_write, "%04d-%02d-%02d %5s", ev, honap, nap, edited_text);
 					if(date_edit_save == SAVE) {
-						// sprintf(string_for_write, "%04d%02d%02d %02d%02d %02d", ev, honap, nap, ora, perc, homerseklet);
-						sprintf(string_for_write, "%04d%02d%02d %02d%02d %02d", ev, honap, nap, ora, perc, masodperc);
+						sprintf(string_for_write, "%04d%02d%02d %02d%02d %02d", ev, honap, nap, ora, perc, homerseklet);
+						// sprintf(string_for_write, "%04d%02d%02d %02d%02d %02d", ev, honap, nap, ora, perc, masodperc);
 						curr_edit = NOEDIT;
 					}
 				}
 			}
 			
 			if(curr_edit == NOEDIT) {
-				// sprintf(string_for_write, "%04d%02d%02d %02d%02d %02d", ev, honap, nap, ora, perc, homerseklet);
-				sprintf(string_for_write, "%04d%02d%02d %02d%02d %02d", ev, honap, nap, ora, perc, masodperc);
+				sprintf(string_for_write, "%04d%02d%02d %02d%02d %02d", ev, honap, nap, ora, perc, homerseklet);
+				// sprintf(string_for_write, "%04d%02d%02d %02d%02d %02d", ev, honap, nap, ora, perc, masodperc);
 			}
 			
 			lcd_set_cursor_position(0);
@@ -388,6 +393,45 @@ int main(void)
 			}
 			task_500ms=FALSE;
 		}
+		
+		if(task_1s) {
+			// send data via CAN
+			// DATE, TIME
+			uint8_t cnt_4bit = 3;
+			
+			uint8_t ev_rovid = ev % 100;
+			uint8_t honap_0_bit = honap & 1;
+			uint8_t honap_123_bit = honap & (0b00001110);
+			uint8_t hetnapja = 5;
+			uint8_t nap_01_bit = nap & (0b00000011);
+			uint8_t nap_234_bit = nap & (0b00011100);
+			uint8_t masodperc_01_bit = masodperc & (0b00000011);
+			uint8_t masodperc_2345_bit = masodperc & (0b00111100);
+			
+			uint8_t can_tx_data[5];
+			can_tx_data[0] = ev_rovid | (honap_0_bit<<7);
+			can_tx_data[1] = (honap_123_bit>>1) | (hetnapja<<3) | (nap_01_bit<<6);
+			can_tx_data[2] = (nap_234_bit>>2) | (ora<<3);
+			can_tx_data[3] = perc | (masodperc_01_bit<<6);
+			can_tx_data[4] = (masodperc_2345_bit>>2) |(cnt_4bit<<4);
+			CAN_SendMob(0,0x1FE,FALSE,5,can_tx_data);
+			
+			// TEMPERATURE
+			homerseklet = (read_temperature()>>1);
+			
+			int16_t homerseklet_can = (homerseklet-100) * 10;
+			uint8_t homerseklet_can0_8 = (uint8_t)homerseklet_can;
+			uint8_t homerseklet_can9_12 = (uint8_t)(homerseklet_can>>8);
+
+			uint8_t can_tx_data_1[2];
+			can_tx_data_1[0] = 0x00;
+			can_tx_data_1[1] = 99;
+			can_tx_data_1[0] = homerseklet_can0_8;
+			can_tx_data_1[1] = homerseklet_can9_12;
+			CAN_SendMob(1,0x1FF,FALSE,2,can_tx_data_1);
+			
+			task_1s = FALSE;
+		}
     }
 }
 
@@ -400,6 +444,7 @@ ISR(TIMER0_COMP_vect) //timer CTC interrupt
 	if(timer_cnt % 1 == 0) task_10ms = TRUE;
 	if(timer_cnt % 10 == 0) task_100ms = TRUE;
 	if(timer_cnt % 50 == 0) task_500ms =TRUE;
+	if(timer_cnt % 100 == 0) task_1s = TRUE;
 }
 
 ISR(INT0_vect) //extint 0 interrput
