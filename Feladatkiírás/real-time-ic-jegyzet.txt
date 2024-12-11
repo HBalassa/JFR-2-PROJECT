@@ -1,0 +1,182 @@
+***********************
+DS1307 DATASHEET JEGYZET
+***********************
+
+***********************
+GENERAL DESCRIPTION
+***********************
+* Adress data transferred serially through I^2C
+* Provides sec, min, hour, day, date, month, year
+* months width <31 days automatically adjusted
+* operates in either 24/12 hour format
+* automatically switches to backup suplly if needed
+* leap year compensation
+* valid up to 2100
+
+***********************
+PIN DESCRIPTION
+***********************
+1. X1 & 2. X2
+* Connection for Quartz Crystal
+* X1 -> input to the oscillator; but can be connected to external oscillator
+* X2 -> output of the internal oscillator; if external oscillator is connected to X1, than left floated
+
+3. VBAT
+* backup supply input
+* if no backup suplly, VBAT must be grounded
+
+4. GND
+* ground
+
+5. SDA
+* Serial Data I/O
+* the data I/O for the I^2C
+* SDA is an open drain and requires an external pullup resistor
+* pullup V: <5.5V
+
+6. SCL
+* Serial Clock Input
+* the clock input for the I^2C
+* used to synchronzie data movement on the serial interface
+* pullup V: <5.5V
+
+7. SQW/OUT
+* Square Wave/Output Driver
+* when enabled -> SQWE = 1 -> SQW/OUT outputs one of four square-wave frequencies (1Hz, 4kHz, 8 kHz, 32 kHz)
+* SQW/OUT is open drain and requires an external pullup resistor
+* operates with VCC or VBAT
+* pullup V: <5.5V
+* if not used can be left floating
+
+8. VCC
+* Primary Power Supply
+* when voltage is is applied between normal limits, the device is fully accessible and data can be written and read
+* when backup supply is connected to device AND VCC<VTP -> read and writes are restricted; but timekeeping still continues
+
+***********************
+DETAILED DESCRIPTION
+***********************
+* low-power clock/calendar with 56 bytes of battery-backed SRAM
+* provides sec, min, hour, day, date, month, year information
+* months is automatically adjusted
+* operates as a SLAVE device in I^2C bus
+* access is obtained by implementing a START condition and providing a device identification code followed by a register address
+* subsequent registers can be accessed sequentally until STOP condition executed
+* when VCC < 1.25*VBAT -> resets the device address counter; inputs wont be recognized at this time
+* when VCC < VBAT -> switches to low-current battery-backup mode
+* when VCC > VBAT+0.2V -> switches from battery to VCC
+* when VCC > 1.25*VBAT -> recognizes inputs
+
+***********************
+RTC AND RAM ADDRESS MAP
+***********************
+* RTC registers: 00h - 07h address locations
+* RAM registers: 08h - 3Fh address locations
+* after 3Fh -> 00h comes
+
+***********************
+CLOCK AND CALENDAR
+***********************
+* time and calendar is obtained by reading the appropriate register bytes
+* time and calendar are set/initialized by writing the appropriate register bytes
+* the contents of registers are in BCD format
+* day-of-week increments at midnight
+* values that correspond to the day of week are user-defined but nust be sequential (e.g. Sunday: 1; Monday: 2 ...)
+* Illogical data -> set to undefined
+* Bit 7 of register 0 -> clock halt (CH) bit; CH=1 -> oscillator disabled; CH=0 -> oscillator enabled
+* first application the time and date registers: 01/01/00 01 00:00:00 (MM/DD/YY DOW HH:MM:SS) and CH=1
+
+* the clock can be run in either 12-hour or 24-hour mode
+* Bit 6 of the hours register defines this: if 1 -> 12-hour mode; if 0 -> 24-hour mode
+* Bit 5 of the hours register: when Bit6 = 1 -> Bit5 = 1 -> PM, Bit5 = 0 -> AM; when Bit6 = 0 -> this is the second 10-hour bit (20-23 hours)
+* hours value must be re-entered whenever the 12/24-hour mode bit is changed
+
+* when reading/writing registers -> secondary buffers are used to prevent errors when the internal registers update
+* when reading/writing registers -> user buffers are synchronized to the internal registers on any I2C START
+* the time information is read from these secondary registers, while clock continues to run
+* this way no re-read is needed in case internal registers update during a read
+* this divider chain is reset whenever the second register is written and the remaining time and date registers must be written within one second
+
+***********************
+CONTROL REGISTER
+***********************
+* Address: 07h
+* it is used to control the operation of the SQW/OUT PIN
+* Bit 7: Output control
+  - this bit controls the output level of the SQW/OUT pin, when the square-wave output is disabled
+  - if SQWE = 0 -> the logic level on SQW/OUT pin is 1 if OUT = 1; and 0 if OUT = 0
+  - initially this bit is 0
+* Bit 4: Square-Wave Enable (SQWE)
+  - it is 1 -> enables oscillator output
+  - the fequency depends of square wave output depends upon the value of RS0 and RS1 (Bit 0 and Bit 1)
+  - SQW/OUT output -> 1Hz -> clock updates on falling edge of the square wave
+  - initially this bit is 0
+* Bit 1 and 0: Rate select (RS[1:0])
+  - controls the frequency of the square-wave output when it is enabled
+  - intially these bits are 1-1
+
+***********************
+I2C DATA BUS
+***********************
+* device that sends data -> transmitter
+* device that recieves data -> receiver
+* device that controlls message -> master
+* devices that are controlled by the master -> slaves
+* the bus is controlled by a master that generates serial clock (SCL), controls bus access, generates START and STOP conditions
+* this DS1307 is a SLAVE
+
+* data transfer only happen when bus is not busy
+
+* bus conditions:
+  - Bus not busy: SCL and SDA are HIGH
+  - START data transfer: SCL HIGH; SDA HIGH to LOW
+  - STOP data transfer: SCL HIGH; SDA LOW to HIGH
+  - Data valid:
+    + the data line must be stable for the duration of the HIGH period of the clock signal, so data must be changed during the LOW period
+    + one clock pulse per bit of data
+    + each data transfer starts with a START condition and ends with a STOP condition
+    + the number of data bytes are not limited, but determined by the master device
+    + information is transferred byte-wise, and each receiver acknowledges with a ninth bit
+    + DS1307 operates in the standard mode (100kHz) only
+  - Acknowledgement:
+    + each receiving device, when addressed is obligied to generate am acknowledge after the reception of each byte
+    + the master must generate an extra clock pulse which is associated with this acknowledgement bit
+    + the device that acknowledges must pull down the SDA line during the clock pulse in such way that SDA is stable LOW while SCL is HIGH
+
+* depending on the R/W bit two types of data transfer are possible:
+1. Data transfer from a master transmitter to a slave receiver
+  - first byte from master: the slave address
+  - than a number of data bytes
+  - the slave returns an acknowledge bit after each received byte
+  - data is transferred with the most significant bit (MSB)
+2. Data transfer from a slave transmitter to a master receiver
+  - first byte from the master: the slave address
+  - than slave returns an acknowledge bit
+  - after a number a data bytes from slave to master
+  - the master returns an acknowledge bit after all recieved bytes other than the last byte
+  - at the end of the last recieved byte a not acknowledge is returned
+
+* the master generates all the serial clock pulses and the START and STOP conditions
+* a transfer ends with a STOP of repeated START condition
+* data transferred with the MSB first
+
+* the DS1307 can operate in the following two modes:
+1. Slave Reciever Mode (Write Mode):
+  - serial data and clock are received through SDA and SCL
+  - after each byte recieved and acknowledge bit is transmitted
+  - START and STOP conditions are the beginning and end of serial transfer
+  - after START condition, first byte received: slave address byte: 1101000 (for DS1307) then the direction bit (R/W) which is 0 for write
+  - after this, DS1307 outputs an acknowledge on SDA
+  - after this the master transmits a word address to the DS1307 -> this sets the register pointer on the DS1307, with the DS1307 acknowledging the transfer
+  - then the master can transmit 0 or more bytes of data with the DS1307 acknowledging each byte received
+  - the register pointer automatically increments after each data byte are written
+  - at the end: master generates STOP condition
+2. Slave Transmitter Mode (Read Mode):
+  - the DS1307 transmits serial data on SDA, while serial clock is input on SCL
+  - START condition from master, than the first byte
+  - first byte from master: slave address (7-bits) than R/W (1)
+  - then the DS1307 acknowledges, and then the data bytes come each ending with the acknowledge bit from master
+  - the data starts with the register address pointed to by the register pointer
+  - if the register pointer is not written to before the initiation of a read mode the first address that is read is the last one stored in the register pointer
+  - the register pointer automatically increments after each byte
+  - at the end the DS1307 must receive a NOT Acknowledge by the master

@@ -1,0 +1,314 @@
+******************************************
+AT90CAN32 Datasheet pp. 204-233 JEGYZET
+******************************************
+
+******************************************
+INTRODUCTION
+******************************************
+* two bi-directional bus lines: serial clock (SCL) and serial data (SDA)
+* both lines are connected to VCC through pullup resistors
+
+TERMINOLOGY
+* master: initiates and terminates transmissions; generates SCL clock
+* slave: device addressed by the master
+* transmitter: device placing data on the bus
+* receiver: device reading data on the bus
+
+ELECTRICAL INTERCONNECTION
+* all devices on the bus are open-drain -> wired AND function
+* LOW on line -> one or more devices on LOW
+* HIGH on line -> all are on HIGH
+* bus capacitance limit: 400pF
+* two specifications: 100kHz OR 400kHz speed
+
+******************************************
+DATA TRANSFER AND FRAME FORMAT
+******************************************
+TRANSFERRING BITS
+* each data bit is accompanied by a pulse on the clock line
+* the level of data must be stable when SCL is HIGH
+* exepction: START/STOP conditions
+
+START AND STOP CONDITIONS
+* any transmission is initiated with a START condition from the master and is terminated when the master issues a STOP condition
+* between STOP and START the bus is busy
+* only a REPEATED START condition can occur between START and STOP, and it starts a new transmission
+* (REPEATED) START: SCL: HIGH; SDA: HIGH->LOW
+* STOP: SCL: HIGH; SDA: LOW->HIGH
+
+ADDRESS PACKET FORMAT
+* address packet (9-bits): 7-bit address + 1-bit direction + 1-bit acknowledge
+* if a slave is being addressed it should acknowledge by pulling SDA to LOW in the ninth SCL cycle
+* if it's busy, than the SDA shall left high in the ninth SCL cycle
+* then the master do a REPEATED START condition
+
+* the MSB of the address byte is transmitted first
+* adress 0000000 is general call
+
+* at a general call, all slaves should respond by pulling the SDA line low in the ACK cycle
+* it is used when the master wants to transmit the same message to several slaves
+* general call followed by a READ bit is meaningless
+* all addresses of the format 1111xxx should be reserved for future purposes
+
+DATA PACKET FORMAT
+* all data are 9 bits long: data byte and acknowledge bit
+* ACK is signalled by pulling the SDA LOW by the receiver during the ninth SCL cycle
+* if SDA is HIGH in the ninth cycle it means NACK
+* when the receiver gets the last byte it shall inform the transmitter by sending a NACK
+* the MSB data byte is transmitted first
+
+COMBINING ADDRESS AND DATA PACKETS INTO A TRANSMISSION
+* transmission: START + SLA+R/W + DATA+ACK + ... + STOP
+* empty message (START+STOP) is illegal
+* the wired-AND of the SCL line can be used: the slave can extend the SCL LOW period by pulling the SCL line low (useful when the clock speed is too fast); this doesnt affect the clock time of the HIGH period (as it is determined by the master)
+
+******************************************
+MULTI-MASTER BUS SYSTEMS
+******************************************
+* not important for us since the DS1307 is a slave in our system
+
+******************************************
+OVERVIEW OF THE TWI MODULE
+******************************************
+SCL AND SDA PINS
+* output drivers have slew-rate limiter
+* input drivers have spike filters
+* the internal pullup resistors can be enabled by setting the PORT bits corresponding to the SCL and SDA pins
+* the internal pullups can eliminate the need of external pullup resistors
+* SCL -> PD0; SDA -> PD1 pins
+* to set up the pullup resistors:
+  > DDRD = (0<<PD0) | (0<<PD1);
+  > PORTD = (1<<PD0) | (1<<PD0);
+
+BIT RATE GENERATOR UNIT
+* this unit controls the period of SCL when operating in a Master mode
+* this period is controlled by the settings in the TWI Bit Rate Register (TWBR) and the Prescaler bits in the TWI Status Register (TWSR)
+* (in slave operation the CPU clock frequency must be 16x higher than the SCL frequency)
+* the SCL frequency is generated according to the equation:
+  - SCL frequency = (CLKio)/(16 + 2*(TWBR)*4^(TWPS))
+  - where TWBR: value of the TWBR register [should be 10 or higher]
+  - and TWPS: value of the prescaler bits in the TWSR register
+
+BUS INTERFACE UNIT
+* this unit contains the Data and Address Shift Register (TWDR), and START/STOP controller
+* TWDR (8-bit) contains the address or data bytes to be trasmitted or received
+* this unit also contains a register containing the (N)ACK bit to be transmitted or recieved
+* the (N)ANCK register is not directly accessible, but when recieving it can be set or cleared by manipulating the TWI Control Register (TWCR)
+* when in transmitter mode, the value of the recieved (N)ACK bit can be determined by the value in the TWSR
+
+ADDRESS MATCH UNIT
+* the address unit checks if received address bytes match the 7-bit address in the TWI Address Register (TWAR)
+* if the TWI General Call Recognition Enable (TWGCE) bit in the TWAR is written to 1, all incoming address bits will also be compared against the General Call address
+* if an address matches -> Control Unit is informed to take actions
+
+CONTROL UNIT
+* this unit monitors the TWI bus and generates responses corresponding to the settings in the TWCR register
+* when an event occurs on the bus, the TWI Interrupt Flag (TWINT) is asserted
+* in the next cycle the TWSR register is updated with a status code identifying the event
+* as long as the TWINT flag is set, the SCL line is held LOW
+* the TWINT flag is set in the following situations:
+  - after START/REPEATED START condition
+  - after SLA+R/W
+  - after address byte
+  - after received data byte
+  - after STOP condition
+
+******************************************
+TWI REGISTER DESCRIPTION
+for more information datasheet pp. 212-215
+******************************************
+TWI BIT RATE REGISTER (TWBR)
+* Bits 7...0
+  - selects the division factor for the bit rate generator (in the eqation above)
+
+TWI CONTROL REGISTER (TWCR)
+* Bit 7 - TWINT: TWI Interrupt Flag
+  - set by hardware
+  - while the TWINT flag is set the SCL low period is streched
+  - the TWINT must be cleared by writing a 1
+  - it is not automatically cleared
+  - clearing this flag starts the operation of the TWI, so all accesses to the TWAR, TWSR and TWDR must be complete before clearing this flag
+* Bit 6 - TWEA: TWI Enable Acknowledge Bit
+  - if TWEA: 1 -> the ACK pulse is generated if the conditions are met:
+    + the decice's own slave address has been received
+    + general call has been recieved
+    + data byte has been received
+  - if TWEA: 0 -> the device virtually disconnects from the TWI Serial Bus temporarly
+  - address recognition can then be resumed by writing 1 to TWEA
+* Bit 5 - TWSTA: TWI START Condition Bit
+  - the application writes a 1 to TWSTA when it wants to start the bus
+  - TWSTA must be cleared when the START condition has been transmitted
+* Bit 4 - TWSTO: TWI STOP Condition Bit
+  - TWSTO: 1 -> generates a STOP condition
+  - when STOP condition is generated, this is cleared automatically
+* Bit 3 - TWWC: TWI Write Collision Flag
+  - it is set when attempting to write to the TWDR when TWINT is low
+  - cleared by writing the TWDR Register when TWINT is high
+* Bit 2 - TWEN: TWI Enable Bit
+  - TWEN: 1 -> TWI takes control over the I/O pins connected to the SCL and SDA (PD0 and PD1)
+  - TWEN: 0 -> TWI is switched off
+* Bit 1 - Reserved Bit
+  - must be written to 0
+* Bit 0 - TWIE: TWI Interrupt Enable
+  - TWIE: 1 -> TWI interrupt request is activated as long as the TWINT flag is HIGH
+
+TWI STATUS REGISTER - TWSR
+* Bit 7...3 - TWS: TWI Status
+  - these bits reflect to the status of the Two Wired Serial Bus:
+    + see: Status Codes Table 18-4. p. 224
+* Bit 2 - Res: Reserved Bit
+  - always read as 0
+* Bit 1...0 - TWPS: TWI Prescaler Bits
+  - these give the TWPS value in the equation above
+  - values, see: Table 18-2. p. 214
+
+TWI DATA REGISTER - TWDR
+* Bits 7...0 - TWD: TWI Data Register
+  - transmit mode -> the next byte to be transmitted
+  - receive mode -> the last byte received
+  - it is writeable while the TWI is not in the process of shifting a byte -> this happens when TWINT is set by hardware
+  - it cannot be initialized before the first interrupt occurs
+  - the data remains stable as long as TWINT is set
+  - while data is shifted out, data on the bus is simultaneously shifted in
+  - always contains the last byte present on the bus
+  - handling of the ACK bit is controlled automatically by the TWI logic
+
+TWI (SLAVE) ADDRESS REGISTER - TWAR
+* Bits 7...1 - TWA: TWI (Slave) Address Register
+  - these bits constitute the salve address
+  - these shall be loaded with the 7-bit slave address which the TWI will respond as a slave transmitter or receiver
+* Bit 0 - TWGCE: TWI General Call Recognition Enablw Bit
+  - TWGCE: 1 -> enables the recognition of the general call address (0x00)
+
+******************************************
+USING THE TWI
+see example code at p. 217
+******************************************
+* byte-oriented and interrupt based
+* interrupts issued after all bus events (e.g. reception of a byte or transmission of START)
+* the TWIE bit in TWCR together with the Global Interrupt Enable bit int SREG allows the application to assert the generation of interrupt request by the TWINT flag
+* if TWIE is cleared -> the TWINT must be polled in order to detect any actions on the bus
+
+* When TWINT flag is asserted -> TWI has finished an operation and awaits application response
+* The TWSR contains the current state of the TWI bus
+* than the application can decide how the TWI bus should behave in the next cycle by manipulationg TWCR and TWDR Registers
+
+TYPICAL TRANSMISSION - Master Transmit, slave receive mode typical flow
+1. (software)
+* Transmit a START condition by writing a specific value in TWCR
+* TWINT: 1 -> clearing the flag by writing
+* after the TWINT is set, the TWI initiates the transmission of the START Condition
+* TWSTA: 1 -> to send a request to become the master in the TWI
+* TWEN: 1 -> to turn on TWI
+* Code:
+  > TWCR =  (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
+
+2. (hardware)
+* START Condition has been transmitted
+* the TWINT flag in TWCR is set
+* TWSR is updated with a status code indicating that the START condition has successfully been sent
+
+3. (software)
+* check TWSR to make sure START condition was successfully transmitted
+* if not -> some error routin should be executed
+* if yes -> load SLA+W (slave address + write bit) into TWDR
+* a specific value must be written to TWCR instructing the TWI hardware to transmit the SLA+W present in TWDR
+  > TWCR = (1<<TWINT) | (1<<TWEN);
+
+4. (hardware)
+* address packet has been transmitted
+* the TWINT flag in TWCR is set
+* TWSR is updated with a status code indicating that the address packet has sucsessfully been sent
+
+5. (software)
+* check TWSR to make sure that address packet was successfully transmitted and the ACK was received
+* if not -> some error routin should be executed
+* if yes -> load data packet into TWDR
+* a specific value must be written to TWCR instructing the TWI hardware to transmit the SLA+W present in TWDR
+  > TWCR = (1<<TWINT) | (1<<TWEN);
+
+6. (hardware)
+* data packet has been transmitted
+* the TWINT flag in TWCR is set
+* TWSR is updated with a status code indicating that the data packet has successfully been sent
+
+7. (software)
+* check TWSR to make sure that data packet was successfully transmitted and the ACK was received
+* if not -> some error routin should be executed
+* if yes -> a specific value to TWCR instructing the TWI to transmit a STOP condition
+  > TWCR = (1<<TWINT) | (1<<TWEN) | (1<<TWSTO);
+ 
+******************************************
+TRANSMISSION MODES
+******************************************
+* four major modes: 
+  - Master Transmitter (MT) -> for us these two are needed
+  - Master Receiver (MR) -----^ 
+  - Slave Transmitter (ST)
+  - Slave Receiver (SR)
+* several modes can be used in one application
+* we will need to use MT to write and MR to receive Data from the real-time-ic
+
+MASTER TRANSMITTER MODE
+* a number of data bytes are transmitted to a slave receiver
+* START Condition is sent:
+  - TWINT: 1 -> clear TWINT flag
+  - TWSTA: 1 -> transmit a START condition
+  - TWEN: 1 -> enable Two-wired Serial Interface
+  > TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
+* the TWI generates a START Condition as the bus becomes free
+* after the TWINT flag is set by hardware and status code in TWSR will be 0x08
+* in order to enter MT mode SLA+W must be transmitted:
+  - TWD7...1: 0/1 -> slave address
+  - TWD0: 0 -> write
+  > TWDR = (...) | (0<<TWD0);
+* clear the interrupt flag:
+  > TWCR = (1<<TWINT) | (1<<TWEN);
+* when SLA+W has been transmitted an ACK bit is received
+* TWINT flag is set again by the hardware and the status code in TWSR is updated to either 0x18 or 0x20 or 0x38
+* the appropriate action after each is detailed in Table 18-3 p. 220
+* when SLA+W has been successfully transmitted, the data packet should be transmitted
+* write the data byte to TWDR:
+  - TWD1...0: 0/1 -> data
+* clear the interrupt flag
+  > TWCR = (1<<TWINT) | (1<<TWEN);
+* this scheme is repeated until the last byte of data is sent
+* than generate a STOP condition:
+  - TWSTO: 1 -> transmit a STOP condition
+  > TWCR = (1<<TWINT) | (1<<TWSTO) | (1<<TWEN);
+* or generate a REPEATED START condition
+  > TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
+* in case of a REPEATED START condition the status code in TWSR is 0x10
+* REPEATED START enables the master to switch between slaves or MT and MR modes without losing control of the bus
+
+MASTER RECEIVER MODE
+* a number of data bytes are received from a slave transmitter
+* START condition is sent:
+  - TWINT: 1 -> clear TWINT flag
+  - TWSRA: 1 -> transmit a START condition
+  - TWEN: 1 -> enable the Two-wire Serial Interface
+  > TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
+* the TWI generates a START Condition as the bus becomes free
+* after the TWINT flag is set by hardware and status code in TWSR will be 0x08
+* in order to enter MR mode SLA+R must be transmitted:
+  - TWD7...1: 0/1 -> slave address
+  - TWD0: 1 -> read
+  > TWDR = (...) | (1<<TWD0);
+* clear interrupt flag:
+  > TWCR = (1<<TWINT) | (1<<TWEN);
+* when SLA+R has been transmitted an ACK bit is received
+* TWINT flag is set again by the hardware and the status code in TWSR is updated to either 0x38 or 0x40 or 0x48
+* the appropriate action after each is detailed in Table 18-4 p. 224
+* when SLA+R has been successfully transmitted, the data will be received
+* to get the received data, just read the TWDR Register byte
+* clear the interrupt flag
+  > TWCR = (1<<TWINT) | (1<<TWEN);
+* this scheme is repeated until the last byte is received
+* after the last byte has been received the MR informs the ST by sending a NACK after the last received data byte
+* than generate a STOP condition:
+  - TWSTO: 1 -> transmit a STOP condition
+  > TWCR = (1<<TWINT) | (1<<TWSTO) | (1<<TWEN);
+* or generate a REPEATED START condition:
+  > TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
+* in case of a REPEATED START condition the status code in TWSR is 0x10
+* REPEATED START enables the master to switch between slaves or MT and MR modes without losing control of the bus
