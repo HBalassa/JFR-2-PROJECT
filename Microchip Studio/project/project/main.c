@@ -215,6 +215,7 @@ int main(void)
 						date_edit_save = EDIT;
 					} else if(date_edit_save == EDIT) {
 						date_edit_save = SAVE;
+						masodperc = 0;
 						twi_mt_mode(curr_edit, masodperc, perc, ora, nap, honap, ev);
 					}
 				}
@@ -293,7 +294,7 @@ int main(void)
 						}
 						case 2: {
 							if(ev != 2099) ev++;
-							else ev == 2000;
+							else ev = 2000;
 							break;
 						}
 					}
